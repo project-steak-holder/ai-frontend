@@ -1,0 +1,81 @@
+# =====================
+# Dependencies
+# =====================
+node_modules
+
+# =====================
+# TanStack Start / Vinxi / Nitro build artifacts
+# =====================
+.tanstack
+.vinxi
+.nitro
+.output
+
+# =====================
+# Vite build artifacts
+# =====================
+dist
+dist-ssr
+*.local
+
+# =====================
+# TanStack Router (auto-generated)
+# =====================
+src/routeTree.gen.ts
+
+# =====================
+# Wrangler (Cloudflare)
+# =====================
+.wrangler
+
+# =====================
+# Environment files
+# =====================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =====================
+# Testing (Vitest)
+# =====================
+coverage
+
+# =====================
+# TypeScript
+# =====================
+*.tsbuildinfo
+
+# =====================
+# Editor / IDE
+# =====================
+.idea
+*.swp
+*.swo
+*~
+
+# =====================
+# OS files
+# =====================
+.DS_Store
+Thumbs.db
+
+# =====================
+# Logs
+# =====================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =====================
+# Scaffolding artifacts
+# =====================
+.cta.json
+
+# =====================
+# Project-specific
+# =====================
+count.txt
+todos.json
