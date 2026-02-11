@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
 	server: {
-		DATABASE_URL: z.url().optional(),
+		DATABASE_URL: z.url(),
 		NODE_ENV: z.enum(["development", "production"]),
 	},
 
@@ -14,7 +14,7 @@ export const env = createEnv({
 	clientPrefix: "VITE_",
 
 	client: {
-		VITE_NEON_AUTH_URL: z.url().optional(),
+		VITE_NEON_AUTH_URL: z.url(),
 	},
 
 	/**
