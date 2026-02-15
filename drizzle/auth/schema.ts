@@ -1,4 +1,4 @@
-import { pgTable, pgSchema, unique, uuid, text, boolean, timestamp, index, foreignKey } from "drizzle-orm/pg-core"
+import { pgSchema, unique, uuid, text, boolean, timestamp, index, foreignKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const neonAuth = pgSchema("neon_auth");
