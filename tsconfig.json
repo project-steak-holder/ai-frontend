@@ -1,5 +1,6 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["drizzle/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
@@ -20,7 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
