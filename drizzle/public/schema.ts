@@ -1,5 +1,5 @@
 import { pgTable, foreignKey, uuid, varchar, timestamp, index, text, pgEnum } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+import { userInNeonAuth } from "@drizzle/auth/schema";
 
 export const messagetype = pgEnum("messagetype", ['USER', 'AI'])
 
@@ -13,7 +13,7 @@ export const conversation = pgTable("conversation", {
 }, (table) => [
 	foreignKey({
 			columns: [table.userId],
-			foreignColumns: [user.id],
+			foreignColumns: [userInNeonAuth.id],
 			name: "conversation_user_id_user_id_fk"
 		}).onDelete("cascade"),
 ]);
@@ -39,7 +39,7 @@ export const message = pgTable("message", {
 		}),
 	foreignKey({
 			columns: [table.userId],
-			foreignColumns: [user.id],
+			foreignColumns: [userInNeonAuth.id],
 			name: "message_user_id_fkey"
 		}),
 ]);

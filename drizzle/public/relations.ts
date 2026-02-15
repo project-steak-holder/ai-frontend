@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm/relations";
-import { userInNeonAuth, conversation, message } from "./schema";
+import { conversation, message } from "./schema";
+import { userInNeonAuth } from "@drizzle/auth/schema";
 
 export const conversationRelations = relations(conversation, ({one, many}) => ({
 	userInNeonAuth: one(userInNeonAuth, {
