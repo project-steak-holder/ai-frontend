@@ -11,6 +11,7 @@ const config = defineConfig({
 	resolve: {
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
+			"@drizzle": fileURLToPath(new URL("./drizzle", import.meta.url)),
 		},
 	},
 	plugins: [
