@@ -25,6 +25,9 @@
       "@/*": ["./src/*"],
       "@drizzle/*": ["./drizzle/*"],
       "@integrations/*": ["./src/integrations/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@components/*": ["./src/components/*"],
+      "@server/*": ["./src/server/*"]
     }
   }
 }
