@@ -2,7 +2,7 @@ import { userInNeonAuth } from "@drizzle/auth/schema";
 import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 /** Table */
-export const Conversations = pgTable("conversation", {
+export const Conversation = pgTable("conversation", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	userId: uuid("user_id")
 		.notNull()
@@ -13,6 +13,6 @@ export const Conversations = pgTable("conversation", {
 });
 
 /** Types */
-export type Conversation = typeof Conversations.$inferSelect;
-export type NewConversation = typeof Conversations.$inferInsert;
+export type Conversation = typeof Conversation.$inferSelect;
+export type NewConversation = typeof Conversation.$inferInsert;
 export type UpdateConversation = Partial<NewConversation>;

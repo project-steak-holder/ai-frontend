@@ -13,7 +13,7 @@ This project provides a modern web interface for AI-powered conversations. Users
 - **TanStack Start** - Full-stack React framework with file-based routing
 - **TanStack Router** - Type-safe routing with nested layouts
 - **TanStack Query** - Server state management and data fetching
-- **React 24** - Latest React with concurrent features
+- **React 19** - Latest React with concurrent features
 
 ### Database & Authentication
 

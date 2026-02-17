@@ -11,8 +11,9 @@ export default defineConfig({
 	],
 	test: {
 		globals: true,
-		environment: "node",
+		environment: "jsdom",
 		env: loadEnv(process.env.NODE_ENV || "test", process.cwd()),
+		setupFiles: ["./vitest.setup.ts"],
 		typecheck: {
 			enabled: true,
 		},
