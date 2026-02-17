@@ -14,6 +14,7 @@
     "dev": "vite dev --port 3000",
     "format": "biome format",
     "lint": "biome lint",
+    "biome:fix": "biome format --write && biome lint --fix && biome check --fix",
     "prepare": "husky",
     "preview": "vite preview",
     "test": "vitest run"
