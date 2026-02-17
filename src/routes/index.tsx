@@ -20,12 +20,22 @@ function Home() {
 						<div className="mt-6">
 							<div className="flex justify-center mb-6">
 								<UserButton />
+								<button
+									type="button"
+									className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+									onClick={() => authClient.signOut()}
+								>
+									Sign Out
+								</button>
 							</div>
 							<p className="mt-6">Session and User Data:</p>
 							<pre className="flex-1 bg-secondary align-middle whitespace-pre-wrap wrap-break-word sm:max-w-2xl mx-auto text-left">
 								<div className="mt-4 p-4">
 									{JSON.stringify(
-										{ session: data?.session, user: data?.user },
+										{
+											session: data?.session,
+											user: data?.user,
+										},
 										null,
 										2,
 									)}
