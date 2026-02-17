@@ -9,8 +9,9 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { SideBar } from "@/components/SideBar";
-import Header from "../components/Header";
+import { SideBar } from "@/components/layout/SideBar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Header from "../components/layout/Header";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -60,25 +61,27 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						usernameRequired: true,
 					}}
 				>
-					<div className="flex h-screen">
-						<SideBar />
-						<div className="flex-1 flex flex-col">
-							<Header />
-							<main className="flex-1 overflow-auto">{children}</main>
+					<TooltipProvider>
+						<div className="flex h-screen">
+							<SideBar />
+							<div className="flex-1 flex flex-col">
+								<Header />
+								<main className="flex-1 overflow-auto">{children}</main>
+							</div>
 						</div>
-					</div>
-					<TanStackDevtools
-						config={{
-							position: "bottom-right",
-						}}
-						plugins={[
-							{
-								name: "Tanstack Router",
-								render: <TanStackRouterDevtoolsPanel />,
-							},
-							TanStackQueryDevtools,
-						]}
-					/>
+						<TanStackDevtools
+							config={{
+								position: "bottom-right",
+							}}
+							plugins={[
+								{
+									name: "Tanstack Router",
+									render: <TanStackRouterDevtoolsPanel />,
+								},
+								TanStackQueryDevtools,
+							]}
+						/>
+					</TooltipProvider>
 				</NeonAuthUIProvider>
 				<Scripts />
 			</body>
