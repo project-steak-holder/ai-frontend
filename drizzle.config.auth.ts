@@ -3,11 +3,11 @@ import {env} from "@/env";
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
-  out: './drizzle/public',
-  schema: './src/schema/index.ts',
+  out: './drizzle/auth',
   dialect: 'postgresql',
   dbCredentials: {
     url: env.DATABASE_URL,
   },
-  schemaFilter: 'public',
+  schemaFilter: 'neon_auth',
+  tablesFilter: ['user', 'session', 'account'],
 });
