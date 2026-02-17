@@ -12,7 +12,9 @@ const config = defineConfig({
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
 			"@drizzle": fileURLToPath(new URL("./drizzle", import.meta.url)),
-			"@integrations": fileURLToPath(new URL("./src/integrations", import.meta.url)),
+			"@integrations": fileURLToPath(
+				new URL("./src/integrations", import.meta.url),
+			),
 		},
 	},
 	plugins: [
