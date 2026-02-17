@@ -1,6 +1,5 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["drizzle/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
@@ -24,7 +23,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@drizzle/*": ["./drizzle/*"]
+      "@drizzle/*": ["./drizzle/*"],
+      "@integrations/*": ["./src/integrations/*"],
     }
   }
 }
