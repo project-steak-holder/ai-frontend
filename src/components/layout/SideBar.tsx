@@ -18,7 +18,7 @@ export const SideBar = () => {
 				{conversations.map((conv) => (
 					<div
 						key={conv.id}
-						className="px-3 py-2 text-sm rounded-lgcursor-pointer"
+						className="px-3 py-2 text-sm rounded-lg cursor-pointer"
 					>
 						{conv.title}
 					</div>
