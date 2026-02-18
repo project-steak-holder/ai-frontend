@@ -1,6 +1,8 @@
-import type { userInNeonAuth } from "@drizzle/auth/schema";
+import { userInNeonAuth } from "@drizzle/auth/schema";
+
+export const User = userInNeonAuth;
 
 /** Types */
-export type User = typeof userInNeonAuth.$inferSelect;
-export type NewUser = typeof userInNeonAuth.$inferInsert;
+export type User = typeof User.$inferSelect;
+export type NewUser = typeof User.$inferInsert;
 export type UpdateUser = Partial<NewUser>;
