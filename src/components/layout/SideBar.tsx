@@ -1,33 +1,18 @@
-import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { useState } from "react";
+import { CreateConversationDialog } from "@/components/CreateConversationDialog";
 
-export function ConversationSidebar() {
-  const [conversations] = useState([
-    { id: 1, title: 'Convo 1' },
-    { id: 2, title: 'Convo 2' },
-    { id: 3, title: 'Convo 3' },
-    { id: 4, title: 'Convo 4' },
-    { id: 5, title: 'Convo 5' },
+export const SideBar = () => {
+  const [conversations, setConversations] = useState([
+    { id: 1, title: "Requirements Elicitation" },
+    { id: 2, title: "Convo 2" },
   ]);
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
 
-  const handleCreate = () => {
-    if (title.trim()) {
-      console.log('New conversation:', title);
-      setTitle('');
-    }
-    setOpen(false);
+  const handleCreateConversation = (title: string) => {
+    setConversations((prev) => [
+      ...prev,
+      { id: prev.length + 1, title },
+    ]);
+    console.log("New conversation:", title);
   };
 
   return (
@@ -42,31 +27,8 @@ export function ConversationSidebar() {
           </div>
         ))}
       </div>
-      
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="m-4 w-full">New</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Enter a new conversation name?</DialogTitle>
-            <DialogDescription>
-              Give your conversation a descriptive name.
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Requirements Elicitation with Product Owner"
-          />
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreate}>OK</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+      <CreateConversationDialog onCreate={handleCreateConversation} />
     </div>
   );
-}
+};
