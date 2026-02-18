@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { getServerSession } from "@/integrations/neon-auth/server";
 import { db } from "@/lib/db";
 import { Conversation, Message } from "@/lib/schema/runtime";
 
@@ -11,22 +10,17 @@ export const getMessagesByConversationId = createServerFn({
 	.inputValidator(
 		z.object({
 			conversationId: z.uuid(),
+			userId: z.uuid(),
 		}),
 	)
 	.handler(async ({ data }) => {
-		const session = await getServerSession();
-
-		if (!session?.data?.user?.id) {
-			throw new Error("Unauthorized");
-		}
-
 		const conversation = await db
 			.select({ id: Conversation.id })
 			.from(Conversation)
 			.where(
 				and(
 					eq(Conversation.id, data.conversationId),
-					eq(Conversation.userId, session.data.user.id),
+					eq(Conversation.userId, data.userId),
 				),
 			)
 			.limit(1);
@@ -41,7 +35,7 @@ export const getMessagesByConversationId = createServerFn({
 			.where(
 				and(
 					eq(Message.conversationId, data.conversationId),
-					eq(Message.userId, session.data.user.id),
+					eq(Message.userId, data.userId),
 				),
 			)
 			.orderBy(asc(Message.createdAt));
