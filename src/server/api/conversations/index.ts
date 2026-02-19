@@ -7,19 +7,13 @@ import { Conversation } from "@/lib/schema/runtime";
 export const getConversations = createServerFn({
 	method: "GET",
 })
-	.inputValidator(
-		z.object({
-			userId: z.uuid(),
-		}),
-	)
-	.handler(async ({ data }) => {
-		const conversations = await db
+	.inputValidator(z.string().uuid())
+	.handler(async ({ data: userId }) => {
+		return db
 			.select()
 			.from(Conversation)
-			.where(eq(Conversation.userId, data.userId))
+			.where(eq(Conversation.userId, userId))
 			.orderBy(asc(Conversation.createdAt));
-
-		return conversations;
 	});
 
 export const getConversationById = createServerFn({
