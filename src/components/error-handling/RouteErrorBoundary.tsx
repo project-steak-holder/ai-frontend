@@ -48,6 +48,16 @@ Stack Trace:
 ${error.stack || "No stack trace available"}
     `.trim();
 
+		if (
+			typeof navigator?.clipboard === "undefined" ||
+			typeof navigator.clipboard.writeText !== "function"
+		) {
+			if (import.meta.env.DEV) {
+				console.warn("Clipboard API unavailable: unable to copy route error");
+			}
+			return;
+		}
+
 		void navigator.clipboard.writeText(errorText).catch((copyError) => {
 			if (import.meta.env.DEV) {
 				console.error("Failed to copy route error details:", copyError);
