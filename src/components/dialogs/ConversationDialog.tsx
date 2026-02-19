@@ -10,19 +10,17 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useCreateConversation } from "@/lib/hooks/conversations/useCreateConversation";
 
-export function CreateConversationDialog({
-	onCreate,
-}: {
-	onCreate?: (title: string) => void;
-}) {
+export function CreateConversationDialog() {
 	const [open, setOpen] = useState(false);
 	const [title, setTitle] = useState("");
+	const { mutateAsync: createConversation } = useCreateConversation();
 
-	const handleCreate = () => {
+	const handleCreate = async () => {
 		const trimmed = title.trim();
 		if (!trimmed) return;
-		onCreate?.(trimmed);
+		await createConversation({ name: trimmed });
 		setTitle("");
 		setOpen(false);
 	};
@@ -30,7 +28,7 @@ export function CreateConversationDialog({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="m-4">New Conversation</Button>
+				<Button className="w-full">New Conversation</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -40,6 +38,11 @@ export function CreateConversationDialog({
 				<Input
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") {
+							handleCreate();
+						}
+					}}
 					placeholder="Requirements Elicitation"
 				/>
 				<DialogFooter>
