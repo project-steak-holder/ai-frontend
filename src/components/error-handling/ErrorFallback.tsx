@@ -22,8 +22,8 @@ export const ErrorFallback = ({
 	const isRouteError = boundaryName === "RouteErrorBoundary";
 
 	const handleGoHome = () => {
-		window.location.assign("/");
 		onDismiss();
+		window.location.assign("/");
 	};
 
 	const handleReload = () => {

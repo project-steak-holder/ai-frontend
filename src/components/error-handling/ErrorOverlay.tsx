@@ -96,11 +96,11 @@ export const ErrorOverlay = ({
 						<div>
 							<h3 className="font-semibold mb-2">Stack Trace:</h3>
 							<ScrollArea
-								className="max-h-75 w-full rounded border"
+								className="max-h-80 w-full rounded border"
 								type="always"
 							>
 								<div className="font-mono text-xs bg-black/20 p-3 whitespace-pre">
-									{error.stack}
+									{error.stack ?? "No stack trace available"}
 								</div>
 								<ScrollBar orientation="horizontal" />
 							</ScrollArea>
