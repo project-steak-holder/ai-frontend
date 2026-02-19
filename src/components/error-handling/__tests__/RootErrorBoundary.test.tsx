@@ -1,7 +1,7 @@
 // src/components/error-handling/__tests__/RootErrorBoundary.test.tsx
 
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RootErrorBoundary } from "../RootErrorBoundary";
 
 // Test helper component that throws an error
@@ -12,6 +12,10 @@ const ThrowError = ({ message }: { message: string }) => {
 describe("RootErrorBoundary", () => {
 	beforeEach(() => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		vi.unstubAllEnvs();
 	});
 
 	it("catches errors from child components", () => {
@@ -47,8 +51,7 @@ describe("RootErrorBoundary", () => {
 	});
 
 	it("shows ErrorFallback in production", () => {
-		const originalEnv = import.meta.env.DEV;
-		import.meta.env.DEV = false;
+		vi.stubEnv("DEV", false);
 
 		render(
 			<RootErrorBoundary>
@@ -59,8 +62,6 @@ describe("RootErrorBoundary", () => {
 		// ErrorFallback does not show stack trace
 		expect(screen.queryByText(/stack trace/i)).not.toBeInTheDocument();
 		expect(screen.getByText(/oops! something went wrong/i)).toBeInTheDocument();
-
-		import.meta.env.DEV = originalEnv;
 	});
 
 	it("tracks error count on repeated errors", () => {
