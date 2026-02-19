@@ -1,5 +1,7 @@
 // src/components/error-handling/RouteErrorBoundary.tsx
+
 import { useRouter } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useErrorLogger } from "@/lib/hooks/useErrorLogger";
 import { ErrorFallback } from "./ErrorFallback";
 import { ErrorOverlay } from "./ErrorOverlay";
@@ -11,18 +13,22 @@ interface RouteErrorBoundaryProps {
 
 export const RouteErrorBoundary = ({ error }: RouteErrorBoundaryProps) => {
 	const router = useRouter();
-	const timestamp = new Date();
 	const isDev = import.meta.env.DEV;
 
-	const capturedError: CapturedError = {
-		message: error.message,
-		stack: error.stack,
-		boundaryName: "RouteErrorBoundary",
-		route: window.location.pathname,
-		timestamp,
-		userAgent: navigator.userAgent,
-		environment: isDev ? "development" : "production",
-	};
+	const capturedError = useMemo<CapturedError>(
+		() => ({
+			message: error.message,
+			stack: error.stack,
+			boundaryName: "RouteErrorBoundary",
+			route: window.location.pathname,
+			timestamp: new Date(),
+			userAgent: navigator.userAgent,
+			environment: isDev ? "development" : "production",
+		}),
+		[error],
+	);
+
+	const timestamp = capturedError.timestamp;
 
 	useErrorLogger(capturedError);
 
@@ -42,7 +48,11 @@ Stack Trace:
 ${error.stack || "No stack trace available"}
     `.trim();
 
-		navigator.clipboard.writeText(errorText);
+		void navigator.clipboard.writeText(errorText).catch((copyError) => {
+			if (import.meta.env.DEV) {
+				console.error("Failed to copy route error details:", copyError);
+			}
+		});
 	};
 
 	if (isDev) {

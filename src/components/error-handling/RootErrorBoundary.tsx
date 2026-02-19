@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from "react";
+import { Component, type ReactNode, useMemo } from "react";
 import { useErrorLogger } from "@/lib/hooks/useErrorLogger";
 import { ErrorFallback } from "./ErrorFallback";
 import { ErrorOverlay } from "./ErrorOverlay";
@@ -11,6 +11,7 @@ interface RootErrorBoundaryProps {
 interface ErrorDisplayProps {
 	error: Error;
 	errorInfo: React.ErrorInfo | null;
+	boundaryTimestamp: Date;
 	isDev: boolean;
 	errorCount: number;
 	onDismiss: () => void;
@@ -21,25 +22,28 @@ interface ErrorDisplayProps {
 const ErrorDisplay = ({
 	error,
 	errorInfo,
+	boundaryTimestamp,
 	isDev,
 	errorCount,
 	onDismiss,
 	onCopy,
 	onReload,
 }: ErrorDisplayProps) => {
-	const timestamp = new Date();
 	const isPersistentError = errorCount > 3;
 
-	const capturedError: CapturedError = {
-		message: error.message,
-		stack: error.stack,
-		componentStack: errorInfo?.componentStack || undefined,
-		boundaryName: "RootErrorBoundary",
-		route: window.location.pathname,
-		timestamp,
-		userAgent: navigator.userAgent,
-		environment: isDev ? "development" : "production",
-	};
+	const capturedError = useMemo<CapturedError>(
+		() => ({
+			message: error.message,
+			stack: error.stack,
+			componentStack: errorInfo?.componentStack || undefined,
+			boundaryName: "RootErrorBoundary",
+			route: window.location.pathname,
+			timestamp: boundaryTimestamp,
+			userAgent: navigator.userAgent,
+			environment: isDev ? "development" : "production",
+		}),
+		[boundaryTimestamp, error, errorInfo, isDev],
+	);
 
 	useErrorLogger(capturedError);
 
@@ -50,7 +54,7 @@ const ErrorDisplay = ({
 				errorInfo={errorInfo}
 				boundaryName="RootErrorBoundary"
 				route={window.location.pathname}
-				timestamp={timestamp}
+				timestamp={boundaryTimestamp}
 				onDismiss={onDismiss}
 				onCopy={onCopy}
 				onReload={onReload}
@@ -63,7 +67,7 @@ const ErrorDisplay = ({
 		<ErrorFallback
 			error={error}
 			boundaryName="RootErrorBoundary"
-			timestamp={timestamp}
+			timestamp={boundaryTimestamp}
 			onDismiss={onDismiss}
 			onReload={onReload}
 		/>
@@ -119,7 +123,7 @@ export class RootErrorBoundary extends Component<
 		window.location.reload();
 	};
 
-	handleCopy = () => {
+	handleCopy = async () => {
 		const { error, errorInfo } = this.state;
 		if (!error) return;
 
@@ -133,11 +137,17 @@ Component Stack:
 ${errorInfo?.componentStack || "No component stack available"}
     `.trim();
 
-		navigator.clipboard.writeText(errorText);
+		try {
+			await navigator.clipboard.writeText(errorText);
+		} catch (copyError) {
+			if (import.meta.env.DEV) {
+				console.error("Failed to copy error details:", copyError);
+			}
+		}
 	};
 
 	render() {
-		const { hasError, error, errorInfo, errorCount } = this.state;
+		const { hasError, error, errorInfo, errorCount, timestamp } = this.state;
 		const { children } = this.props;
 
 		if (hasError && error) {
@@ -148,6 +158,7 @@ ${errorInfo?.componentStack || "No component stack available"}
 					<ErrorDisplay
 						error={error}
 						errorInfo={errorInfo}
+						boundaryTimestamp={timestamp ?? new Date()}
 						isDev={isDev}
 						errorCount={errorCount}
 						onDismiss={this.handleDismiss}

@@ -7,7 +7,16 @@ export const useErrorLogger = (error: CapturedError) => {
 		console.error("[Error Boundary]", error);
 
 		if (error.environment === "development") {
-			sessionStorage.setItem("lastError", JSON.stringify(error));
+			try {
+				if (typeof globalThis.sessionStorage !== "undefined") {
+					sessionStorage.setItem("lastError", JSON.stringify(error));
+				}
+			} catch (storageError) {
+				console.warn(
+					"[Error Boundary] Failed to persist error in sessionStorage",
+					storageError,
+				);
+			}
 		}
 	}, [error]);
 };
