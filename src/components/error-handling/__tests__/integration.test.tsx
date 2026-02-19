@@ -95,24 +95,28 @@ describe("Error Handling Integration", () => {
 		// @ts-expect-error - Mocking window.location for testing
 		window.location = { ...originalLocation, reload: reloadMock };
 
-		render(
-			<RootErrorBoundary>
-				<ThrowError message="Reload test" />
-			</RootErrorBoundary>,
-		);
+		try {
+			render(
+				<RootErrorBoundary>
+					<ThrowError message="Reload test" />
+				</RootErrorBoundary>,
+			);
 
-		await waitFor(() => {
-			expect(screen.getByText(/component error occurred/i)).toBeInTheDocument();
-		});
+			await waitFor(() => {
+				expect(
+					screen.getByText(/component error occurred/i),
+				).toBeInTheDocument();
+			});
 
-		const reloadBtn = screen.getByRole("button", { name: /reload/i });
-		fireEvent.click(reloadBtn);
+			const reloadBtn = screen.getByRole("button", { name: /reload/i });
+			fireEvent.click(reloadBtn);
 
-		expect(reloadMock).toHaveBeenCalled();
-
-		// Restore original location
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error - Restoring window.location after testing
-		window.location = originalLocation;
+			expect(reloadMock).toHaveBeenCalled();
+		} finally {
+			// Restore original location
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error - Restoring window.location after testing
+			window.location = originalLocation;
+		}
 	});
 });
