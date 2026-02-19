@@ -48,7 +48,6 @@ describe("RootErrorBoundary", () => {
 
 	it("shows ErrorFallback in production", () => {
 		const originalEnv = import.meta.env.DEV;
-		// @ts-expect-error - mocking env
 		import.meta.env.DEV = false;
 
 		render(
@@ -61,7 +60,6 @@ describe("RootErrorBoundary", () => {
 		expect(screen.queryByText(/stack trace/i)).not.toBeInTheDocument();
 		expect(screen.getByText(/oops! something went wrong/i)).toBeInTheDocument();
 
-		// @ts-expect-error
 		import.meta.env.DEV = originalEnv;
 	});
 

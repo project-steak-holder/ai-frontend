@@ -46,6 +46,7 @@ describe("Error Handling Integration", () => {
 	});
 
 	it("copy functionality includes all error details", async () => {
+		const originalClipboard = navigator.clipboard;
 		const writeTextMock = vi.fn().mockResolvedValue(undefined);
 		Object.assign(navigator, {
 			clipboard: {
@@ -53,25 +54,33 @@ describe("Error Handling Integration", () => {
 			},
 		});
 
-		render(
-			<RootErrorBoundary>
-				<ThrowError message="Detailed error" />
-			</RootErrorBoundary>,
-		);
+		try {
+			render(
+				<RootErrorBoundary>
+					<ThrowError message="Detailed error" />
+				</RootErrorBoundary>,
+			);
 
-		await waitFor(() => {
-			expect(screen.getByText(/component error occurred/i)).toBeInTheDocument();
-		});
+			await waitFor(() => {
+				expect(
+					screen.getByText(/component error occurred/i),
+				).toBeInTheDocument();
+			});
 
-		const copyBtn = screen.getByRole("button", { name: /copy/i });
-		fireEvent.click(copyBtn);
+			const copyBtn = screen.getByRole("button", { name: /copy/i });
+			fireEvent.click(copyBtn);
 
-		await waitFor(() => {
-			expect(writeTextMock).toHaveBeenCalled();
-			const copiedText = writeTextMock.mock.calls[0][0];
-			expect(copiedText).toContain("Detailed error");
-			expect(copiedText).toContain("Stack");
-		});
+			await waitFor(() => {
+				expect(writeTextMock).toHaveBeenCalled();
+				const copiedText = writeTextMock.mock.calls[0][0];
+				expect(copiedText).toContain("Detailed error");
+				expect(copiedText).toContain("Stack");
+			});
+		} finally {
+			Object.assign(navigator, {
+				clipboard: originalClipboard,
+			});
+		}
 	});
 
 	it("reload button triggers window reload", async () => {
