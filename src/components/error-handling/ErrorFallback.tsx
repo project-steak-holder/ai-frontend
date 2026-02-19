@@ -1,5 +1,4 @@
 // src/components/error-handling/ErrorFallback.tsx
-import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,12 +19,10 @@ export const ErrorFallback = ({
 	onDismiss,
 	onReload,
 }: Omit<ErrorDisplayProps, "onCopy">) => {
-	const navigate = useNavigate();
-
 	const isRouteError = boundaryName === "RouteErrorBoundary";
 
 	const handleGoHome = () => {
-		navigate({ to: "/" });
+		window.location.assign("/");
 		onDismiss();
 	};
 

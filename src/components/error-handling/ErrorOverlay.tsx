@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
@@ -32,6 +33,9 @@ export const ErrorOverlay = ({
 						<Badge variant="destructive">Error</Badge>
 						<span>Component Error Occurred</span>
 					</DialogTitle>
+					<DialogDescription>
+						An application error was caught by the error boundary.
+					</DialogDescription>
 					{isPersistent && (
 						<Alert variant="destructive" className="mt-2">
 							<AlertDescription>
@@ -67,7 +71,7 @@ export const ErrorOverlay = ({
 						<div className="space-y-2 text-sm">
 							<div>
 								<span className="font-semibold">Location:</span> {boundaryName}{" "}
-								@ {route}
+								@ {route ?? "unknown route"}
 							</div>
 							<div>
 								<span className="font-semibold">Time:</span> {formattedTime}
