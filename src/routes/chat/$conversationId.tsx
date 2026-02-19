@@ -1,94 +1,52 @@
-import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute } from "@tanstack/react-router";
-import { authClient } from "@/integrations/neon-auth/client";
-import { getMessagesByConversationId } from "@/server/api/messages";
-
-const messagesQuery = (conversationId: string, userId: string) =>
-	queryOptions({
-		queryKey: ["messages", conversationId],
-		queryFn: () =>
-			getMessagesByConversationId({ data: { conversationId, userId } }),
-	});
+import ChatLayout from "@/components/layout/ChatLayout";
+import { Input } from "@/components/ui/input";
+import { useSendMessage } from "@/lib/hooks/messages/useSendMessage";
 
 export const Route = createFileRoute("/chat/$conversationId")({
-	loader: async ({ params }) => {
-		const { conversationId } = params;
-
-		if (!conversationId) {
-			throw new Error("Conversation ID is required");
-		}
-
-		return { conversationId };
-	},
 	component: ChatPage,
 });
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
-	const queryClient = useQueryClient();
-
-	const { data: session } = authClient.useSession();
-
-	const {
-		data: messages,
-		isLoading,
-		error,
-	} = useQuery({
-		...messagesQuery(conversationId, session?.user?.id ?? ""),
-		enabled: !!session?.user?.id,
-	});
-
-	// Example: How to invalidate query cache when creating a message
-	const handleSendMessage = async (_text: string) => {
-		// TODO: Call createMessage server function here
-		// await createMessage({ text, conversationId, userId: session.user.id });
-
-		// Invalidate to refetch
-		await queryClient.invalidateQueries({
-			queryKey: ["messages", conversationId],
-		});
+	const { mutateAsync: sendMessage, isPending } = useSendMessage();
+	const handleSendMessage = async (message: string) => {
+		await sendMessage({ conversationId, content: message });
 	};
-
-	if (!session?.user) {
-		return <div>Please sign in to view messages</div>;
-	}
-
-	if (isLoading) {
-		return <div>Loading messages...</div>;
-	}
-
-	if (error) {
-		return <div>Error loading messages: {error.message}</div>;
-	}
-
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex-1 overflow-auto p-4">
-				<div className="whitespace-pre-wrap">
-					{JSON.stringify(messages, null, 2)}
+			<SignedIn>
+				<div className="flex-1 overflow-auto p-4">
+					<ChatLayout waitingOnResponse={isPending} />
 				</div>
-			</div>
 
-			{/* Example message input */}
-			<div className="p-4 border-t">
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						const input = e.currentTarget.elements.namedItem(
-							"message",
-						) as HTMLInputElement;
-						handleSendMessage(input.value);
-						input.value = "";
-					}}
-				>
-					<input
-						name="message"
-						type="text"
-						placeholder="Type a message..."
-						className="w-full px-4 py-2 rounded border"
-					/>
-				</form>
-			</div>
+				<div className="p-4 border-t">
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							const input = e.currentTarget.elements.namedItem(
+								"message",
+							) as HTMLInputElement;
+							handleSendMessage(input.value);
+							input.value = "";
+						}}
+					>
+						<Input
+							name="message"
+							type="text"
+							placeholder="Type a message..."
+							autoComplete="off"
+							disabled={isPending}
+						/>
+					</form>
+				</div>
+			</SignedIn>
+			<SignedOut>
+				<div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+					Please sign in to view the conversation.
+				</div>
+			</SignedOut>
 		</div>
 	);
 }
