@@ -7,7 +7,7 @@ export const createConversation = createServerFn({ method: "POST" })
 	.inputValidator(
 		z.object({
 			userId: z.uuid(),
-			name: z.string(),
+			name: z.string().min(1).max(255),
 		}),
 	)
 	.handler(async ({ data }) => {

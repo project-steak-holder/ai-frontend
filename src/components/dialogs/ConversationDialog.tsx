@@ -55,7 +55,9 @@ export function CreateConversationDialog() {
 					>
 						Cancel
 					</Button>
-					<Button onClick={handleCreate}>Create</Button>
+					<Button disabled={!title.trim()} onClick={handleCreate}>
+						Create
+					</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
