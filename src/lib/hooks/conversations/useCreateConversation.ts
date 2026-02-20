@@ -1,6 +1,6 @@
 import { createConversation } from "@server/api/conversations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "node_modules/@tanstack/react-router/dist/esm/useNavigate";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
 import { guard } from "@/lib/utils";

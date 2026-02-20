@@ -13,9 +13,11 @@ export const useSendMessage = () => {
 		mutationFn: async ({
 			conversationId,
 			content,
+			userId,
 		}: {
 			conversationId: string;
 			content: string;
+			userId: string;
 		}) => {
 			let token: string | null = null;
 
@@ -38,6 +40,7 @@ export const useSendMessage = () => {
 			return await sendMessage({
 				data: {
 					conversationId,
+					userId,
 					content,
 					token,
 				},

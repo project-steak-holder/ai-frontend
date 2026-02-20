@@ -20,9 +20,13 @@ export function CreateConversationDialog() {
 	const handleCreate = async () => {
 		const trimmed = title.trim();
 		if (!trimmed) return;
-		await createConversation({ name: trimmed });
-		setTitle("");
-		setOpen(false);
+		try {
+			await createConversation({ name: trimmed });
+			setTitle("");
+			setOpen(false);
+		} catch {
+			// Error already handled by mutation's onError
+		}
 	};
 
 	return (

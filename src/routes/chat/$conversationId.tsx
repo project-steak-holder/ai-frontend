@@ -4,7 +4,9 @@ import type { SubmitEventHandler } from "react";
 import { z } from "zod";
 import ChatLayout from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/integrations/neon-auth/client";
 import { useSendMessage } from "@/lib/hooks/messages/useSendMessage";
+import { guard } from "@/lib/utils";
 
 const ConversationIdSchema = z.uuid();
 
@@ -19,10 +21,14 @@ export const Route = createFileRoute("/chat/$conversationId")({
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
+	const { data: session } = authClient.useSession();
+	const userId = session?.user?.id;
 	const { mutateAsync: sendMessage, isPending } = useSendMessage();
 
 	const handleSendMessage = async (message: string) => {
-		await sendMessage({ conversationId, content: message });
+		const safeUserId = guard(userId, "You must be signed in to send a message");
+
+		await sendMessage({ conversationId, content: message, userId: safeUserId });
 	};
 
 	const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
