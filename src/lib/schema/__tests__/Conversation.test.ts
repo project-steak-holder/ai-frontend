@@ -3,7 +3,7 @@ import type {
 	Conversation,
 	NewConversation,
 	UpdateConversation,
-} from "./Conversation";
+} from "../Conversation";
 
 describe("Conversation Types", () => {
 	it("should have correct Conversation type structure", () => {

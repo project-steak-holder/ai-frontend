@@ -7,7 +7,7 @@ import { Conversation } from "@/lib/schema/runtime";
 export const getConversations = createServerFn({
 	method: "GET",
 })
-	.inputValidator(z.string().uuid())
+	.inputValidator(z.uuid())
 	.handler(async ({ data: userId }) => {
 		return db
 			.select()

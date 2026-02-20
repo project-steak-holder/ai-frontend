@@ -9,6 +9,8 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { RootErrorBoundary } from "@/components/error-handling/RootErrorBoundary";
+import { RouteErrorBoundary } from "@/components/error-handling/RouteErrorBoundary";
 import { SideBar } from "@/components/layout/SideBar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "../components/layout/Header";
@@ -40,6 +42,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 	}),
 
+	errorComponent: ({ error }) => <RouteErrorBoundary error={error} />,
+
 	shellComponent: RootDocument,
 });
 
@@ -50,39 +54,41 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<NeonAuthUIProvider
-					authClient={authClient}
-					defaultTheme="dark"
-					social={{ providers: ["google"] }}
-					credentials={{
-						rememberMe: true,
-						forgotPassword: true,
-						username: true,
-						usernameRequired: true,
-					}}
-				>
-					<TooltipProvider>
-						<div className="flex h-screen">
-							<SideBar />
-							<div className="flex-1 flex flex-col">
-								<Header />
-								<main className="flex-1 overflow-auto">{children}</main>
+				<RootErrorBoundary>
+					<NeonAuthUIProvider
+						authClient={authClient}
+						defaultTheme="dark"
+						social={{ providers: ["google"] }}
+						credentials={{
+							rememberMe: true,
+							forgotPassword: true,
+							username: true,
+							usernameRequired: true,
+						}}
+					>
+						<TooltipProvider>
+							<div className="flex h-screen">
+								<SideBar />
+								<div className="flex-1 flex flex-col">
+									<Header />
+									<main className="flex-1 overflow-auto">{children}</main>
+								</div>
 							</div>
-						</div>
-						<TanStackDevtools
-							config={{
-								position: "bottom-right",
-							}}
-							plugins={[
-								{
-									name: "Tanstack Router",
-									render: <TanStackRouterDevtoolsPanel />,
-								},
-								TanStackQueryDevtools,
-							]}
-						/>
-					</TooltipProvider>
-				</NeonAuthUIProvider>
+							<TanStackDevtools
+								config={{
+									position: "bottom-right",
+								}}
+								plugins={[
+									{
+										name: "Tanstack Router",
+										render: <TanStackRouterDevtoolsPanel />,
+									},
+									TanStackQueryDevtools,
+								]}
+							/>
+						</TooltipProvider>
+					</NeonAuthUIProvider>
+				</RootErrorBoundary>
 				<Scripts />
 			</body>
 		</html>
