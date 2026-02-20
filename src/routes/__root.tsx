@@ -10,6 +10,7 @@ import {
 import { RootErrorBoundary } from "@/components/error-handling/RootErrorBoundary";
 import { RouteErrorBoundary } from "@/components/error-handling/RouteErrorBoundary";
 import { SideBar } from "@/components/layout/SideBar";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "../components/layout/Header";
 import appCss from "../styles.css?url";
@@ -76,6 +77,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								<div className="flex-1 flex flex-col">
 									<Header />
 									<main className="flex-1 overflow-auto">{children}</main>
+									<Toaster />
 								</div>
 							</div>
 						</TooltipProvider>

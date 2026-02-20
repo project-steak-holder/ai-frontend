@@ -1,14 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
 import type { Message } from "@/lib/schema/Message";
 import { sendMessage } from "@/server/api/messages";
-
 export const useSendMessage = () => {
 	const { data: session } = authClient.useSession();
 	const userId = session?.user?.id;
 
 	const queryClient = useQueryClient();
-
 	return useMutation({
 		mutationKey: ["sendMessage", userId],
 		mutationFn: async ({
@@ -55,7 +54,7 @@ export const useSendMessage = () => {
 			const optimisticMessage: Message = {
 				id: `optimistic-${Date.now()}`,
 				conversationId: variables.conversationId,
-				userId: userId ?? "",
+				userId: userId as string,
 				content: variables.content,
 				type: "USER",
 				createdAt: now,
@@ -76,7 +75,9 @@ export const useSendMessage = () => {
 			if (!context) {
 				return;
 			}
-
+			toast.error(
+				"Oops! Something went wrong while sending your message. Please try again.",
+			);
 			queryClient.setQueryData(context.queryKey, context.previousMessages);
 		},
 		onSuccess: async (_, variables) => {
