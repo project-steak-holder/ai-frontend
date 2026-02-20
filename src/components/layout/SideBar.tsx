@@ -1,5 +1,5 @@
 import { CreateConversationDialog } from "@components/dialogs/ConversationDialog";
-import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react";
+import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { Link, useParams } from "@tanstack/react-router";
 import { AlertCircle, MessageSquare } from "lucide-react";
 import { useConversations } from "@/lib/hooks/conversations/useConversations";
@@ -12,8 +12,8 @@ export const SideBar = () => {
 	const { conversationId } = useParams({ strict: false });
 
 	return (
-		<div className="h-full w-64 flex flex-col border-r bg-sidebar overflow-hidden">
-			<div className="px-4 h-16 border-b flex items-center justify-center shrink-0">
+		<div className="h-full w-64 flex flex-col bg-sidebar overflow-hidden">
+			<div className="px-4 h-16 flex items-center justify-center shrink-0">
 				<Link to="/" className="hover:text-primary transition-colors">
 					<h2 className="text-xl font-semibold text-foreground">
 						Stakeholder AI Chat

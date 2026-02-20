@@ -1,4 +1,7 @@
-import { RedirectToSignIn, SignedIn } from "@neondatabase/neon-js/auth/react";
+import {
+	RedirectToSignIn,
+	SignedIn,
+} from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreateConversationDialog } from "@/components/dialogs/ConversationDialog";
 export const Route = createFileRoute("/")({ component: Home });
