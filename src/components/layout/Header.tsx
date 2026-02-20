@@ -1,22 +1,19 @@
-import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
+import { UserButton } from "@neondatabase/auth/react";
+import { useParams } from "@tanstack/react-router";
+import { useConversation } from "@/lib/hooks/conversations/useConversation";
 
 export default function Header() {
-	return (
-		<header className="p-4 flex items-center bg-card text-card-foreground border-b border-border shadow-sm">
-			<div className="flex items-center space-x-4">
-				<h1 className="text-xl font-semibold">
-					<Link to="/" className="hover:text-primary transition-colors">
-						AI Stakeholder Chat
-					</Link>
-				</h1>
-			</div>
+	const { conversationId } = useParams({ strict: false });
+	const { conversation, error } = useConversation(conversationId as string);
 
-			{/* Your new settings button */}
-			<div className="ml-auto flex items-center space-x-2">
-				<Button variant="outline" size="sm">
-					Settings
-				</Button>
+	return (
+		<header className="h-16 p-4 flex bg-card border-b">
+			<div className="flex gap-2 items-center">
+				{error && "Error loading conversation title"}
+				{conversation?.name}
+			</div>
+			<div className="ml-auto">
+				<UserButton size={"icon"} />
 			</div>
 		</header>
 	);

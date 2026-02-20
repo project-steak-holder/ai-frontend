@@ -1,94 +1,75 @@
-import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { SubmitEventHandler } from "react";
+import { z } from "zod";
+import ChatLayout from "@/components/layout/ChatLayout";
+import { Input } from "@/components/ui/input";
 import { authClient } from "@/integrations/neon-auth/client";
-import { getMessagesByConversationId } from "@/server/api/messages";
+import { useSendMessage } from "@/lib/hooks/messages/useSendMessage";
+import { guard } from "@/lib/utils";
 
-const messagesQuery = (conversationId: string, userId: string) =>
-	queryOptions({
-		queryKey: ["messages", conversationId],
-		queryFn: () =>
-			getMessagesByConversationId({ data: { conversationId, userId } }),
-	});
+const ConversationIdSchema = z.uuid();
 
 export const Route = createFileRoute("/chat/$conversationId")({
-	loader: async ({ params }) => {
-		const { conversationId } = params;
-
-		if (!conversationId) {
-			throw new Error("Conversation ID is required");
+	beforeLoad: ({ params }) => {
+		if (!ConversationIdSchema.safeParse(params.conversationId).success) {
+			throw redirect({ to: "/" });
 		}
-
-		return { conversationId };
 	},
 	component: ChatPage,
 });
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
-	const queryClient = useQueryClient();
-
 	const { data: session } = authClient.useSession();
+	const userId = session?.user?.id;
+	const { mutateAsync: sendMessage, isPending } = useSendMessage();
 
-	const {
-		data: messages,
-		isLoading,
-		error,
-	} = useQuery({
-		...messagesQuery(conversationId, session?.user?.id ?? ""),
-		enabled: !!session?.user?.id,
-	});
+	const handleSendMessage = async (message: string) => {
+		const safeUserId = guard(userId, "You must be signed in to send a message");
 
-	// Example: How to invalidate query cache when creating a message
-	const handleSendMessage = async (_text: string) => {
-		// TODO: Call createMessage server function here
-		// await createMessage({ text, conversationId, userId: session.user.id });
-
-		// Invalidate to refetch
-		await queryClient.invalidateQueries({
-			queryKey: ["messages", conversationId],
-		});
+		await sendMessage({ conversationId, content: message, userId: safeUserId });
 	};
 
-	if (!session?.user) {
-		return <div>Please sign in to view messages</div>;
-	}
-
-	if (isLoading) {
-		return <div>Loading messages...</div>;
-	}
-
-	if (error) {
-		return <div>Error loading messages: {error.message}</div>;
-	}
-
+	const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
+		e.preventDefault();
+		const input = e.currentTarget.elements.namedItem(
+			"message",
+		) as HTMLInputElement;
+		if (!input.value.trim()) return;
+		handleSendMessage(input.value)
+			.then(() => {
+				input.value = "";
+			})
+			.catch(() => {});
+	};
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex-1 overflow-auto p-4">
-				<div className="whitespace-pre-wrap">
-					{JSON.stringify(messages, null, 2)}
-				</div>
-			</div>
-
-			{/* Example message input */}
-			<div className="p-4 border-t">
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						const input = e.currentTarget.elements.namedItem(
-							"message",
-						) as HTMLInputElement;
-						handleSendMessage(input.value);
-						input.value = "";
-					}}
-				>
-					<input
-						name="message"
-						type="text"
-						placeholder="Type a message..."
-						className="w-full px-4 py-2 rounded border"
+			<SignedIn>
+				<div className="flex-1 min-h-0 p-4">
+					<ChatLayout
+						conversationId={conversationId}
+						waitingOnResponse={isPending}
 					/>
-				</form>
-			</div>
+				</div>
+
+				<div className="p-4 border-t">
+					<form onSubmit={handleSubmit}>
+						<Input
+							name="message"
+							type="text"
+							placeholder="Type a message..."
+							autoComplete="off"
+							disabled={isPending}
+						/>
+					</form>
+				</div>
+			</SignedIn>
+			<SignedOut>
+				<div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+					Please sign in to view the conversation.
+				</div>
+			</SignedOut>
 		</div>
 	);
 }
