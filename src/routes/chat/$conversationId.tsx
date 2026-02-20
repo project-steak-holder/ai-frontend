@@ -1,37 +1,54 @@
 import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { SubmitEventHandler } from "react";
+import { z } from "zod";
 import ChatLayout from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
 import { useSendMessage } from "@/lib/hooks/messages/useSendMessage";
 
+const ConversationIdSchema = z.uuid();
+
 export const Route = createFileRoute("/chat/$conversationId")({
+	beforeLoad: ({ params }) => {
+		if (!ConversationIdSchema.safeParse(params.conversationId).success) {
+			throw redirect({ to: "/" });
+		}
+	},
 	component: ChatPage,
 });
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
 	const { mutateAsync: sendMessage, isPending } = useSendMessage();
+
 	const handleSendMessage = async (message: string) => {
 		await sendMessage({ conversationId, content: message });
+	};
+
+	const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
+		e.preventDefault();
+		const input = e.currentTarget.elements.namedItem(
+			"message",
+		) as HTMLInputElement;
+		if (!input.value.trim()) return;
+		handleSendMessage(input.value)
+			.then(() => {
+				input.value = "";
+			})
+			.catch(() => {});
 	};
 	return (
 		<div className="flex flex-col h-full">
 			<SignedIn>
-				<div className="flex-1 overflow-auto p-4">
-					<ChatLayout waitingOnResponse={isPending} />
+				<div className="flex-1 min-h-0 p-4">
+					<ChatLayout
+						conversationId={conversationId}
+						waitingOnResponse={isPending}
+					/>
 				</div>
 
 				<div className="p-4 border-t">
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							const input = e.currentTarget.elements.namedItem(
-								"message",
-							) as HTMLInputElement;
-							handleSendMessage(input.value);
-							input.value = "";
-						}}
-					>
+					<form onSubmit={handleSubmit}>
 						<Input
 							name="message"
 							type="text"
