@@ -122,46 +122,57 @@ export const useStreamingResponse = () => {
 			let pending = "";
 			let completeText = "";
 
-			while (true) {
-				const { value, done } = await reader.read();
+			try {
+				while (true) {
+					const { value, done } = await reader.read();
 
-				if (done) {
-					break;
-				}
-
-				pending += decoder.decode(value, { stream: true });
-				const lines = pending.split("\n");
-				pending = lines.pop() ?? "";
-
-				for (const line of lines) {
-					const normalized = line.trim();
-
-					if (!normalized) {
-						continue;
+					if (done) {
+						break;
 					}
 
-					const rawData = normalized.startsWith("data:")
-						? normalized.slice(5)
-						: normalized;
+					pending += decoder.decode(value, { stream: true });
+					const lines = pending.split("\n");
+					pending = lines.pop() ?? "";
 
-					const chunk = toChunkText(rawData);
+					for (const line of lines) {
+						const normalized = line.trim();
 
-					if (!chunk) {
-						continue;
-					}
+						if (!normalized) {
+							continue;
+						}
 
-					setStreamedText((current) => {
-						const next = current + chunk;
+						const rawData = normalized.startsWith("data:")
+							? normalized.slice(5)
+							: normalized;
+
+						const chunk = toChunkText(rawData);
+
+						if (!chunk) {
+							continue;
+						}
+
+						setStreamedText((current) => current + chunk);
 						onChunk?.(chunk);
-						return next;
-					});
-					completeText += chunk;
+						completeText += chunk;
+					}
 				}
+
+				return completeText;
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "Failed while reading streaming response";
+				setStreamError(errorMessage);
+				throw error;
+			} finally {
+				try {
+					await reader.cancel();
+				} catch {
+					// no-op
+				}
+				setIsStreaming(false);
 			}
-
-			setIsStreaming(false);
-
-			return completeText;
 		},
 		[],
 	);
