@@ -3,6 +3,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/integrations/neon-auth/client";
+import { guard } from "@/lib/utils";
 import { getConversationById } from "@/server/api/conversations";
 
 export const useConversation = (conversationId: string) => {
@@ -15,10 +16,16 @@ export const useConversation = (conversationId: string) => {
 		error,
 	} = useQuery({
 		queryKey: ["conversation", conversationId, userId],
-		queryFn: () =>
-			getConversationById({
-				data: { conversationId, userId: userId as string },
-			}),
+		queryFn: () => {
+			const safeUserId = guard(
+				userId,
+				"You must be signed in to view a conversation",
+			);
+
+			return getConversationById({
+				data: { conversationId, userId: safeUserId },
+			});
+		},
 		enabled: !!userId && !!conversationId,
 	});
 

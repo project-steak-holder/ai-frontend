@@ -3,6 +3,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/integrations/neon-auth/client";
+import { guard } from "@/lib/utils";
 import { getMessagesByConversationId } from "@/server/api/messages";
 
 export const useMessagesByConversationId = (conversationId: string) => {
@@ -11,10 +12,16 @@ export const useMessagesByConversationId = (conversationId: string) => {
 
 	return useQuery({
 		queryKey: ["messages", userId, conversationId],
-		queryFn: () =>
-			getMessagesByConversationId({
-				data: { conversationId, userId: userId as string },
-			}),
+		queryFn: () => {
+			const safeUserId = guard(
+				userId,
+				"You must be signed in to view messages",
+			);
+
+			return getMessagesByConversationId({
+				data: { conversationId, userId: safeUserId },
+			});
+		},
 		enabled: !!conversationId && !!userId,
 	});
 };
