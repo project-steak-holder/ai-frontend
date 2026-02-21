@@ -9,7 +9,11 @@ export const env = createEnv({
 	clientPrefix: "VITE_",
 	client: {
 		VITE_NEON_AUTH_URL: z.url(),
+		VITE_AI_SERVICE_BASE_URL: z.url(),
 	},
-	runtimeEnv: process?.env ?? import.meta.env,
+	runtimeEnv: {
+		...(typeof process !== "undefined" ? process.env : {}),
+		...(typeof import.meta !== "undefined" ? import.meta.env : {}),
+	},
 	emptyStringAsUndefined: true,
 });

@@ -11,8 +11,9 @@ export default defineConfig({
 	],
 	test: {
 		globals: true,
-		environment: "node",
+		environment: "jsdom",
 		env: loadEnv(process.env.NODE_ENV || "test", process.cwd()),
+		setupFiles: ["./vitest.setup.ts"],
 		typecheck: {
 			enabled: true,
 		},
@@ -22,6 +23,9 @@ export default defineConfig({
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
 			"@drizzle": fileURLToPath(new URL("./drizzle", import.meta.url)),
 			"@integrations": fileURLToPath(new URL("./src/integrations", import.meta.url)),
+			"@lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
+			"@components": fileURLToPath(new URL("./src/components", import.meta.url)),
+			"@server": fileURLToPath(new URL("./src/server", import.meta.url)),
 		},
 	},
 });
