@@ -8,8 +8,6 @@ RUN npm ci
 
 ARG VITE_AI_SERVICE_BASE_URL
 ARG VITE_NEON_AUTH_URL
-ENV VITE_AI_SERVICE_BASE_URL=$VITE_AI_SERVICE_BASE_URL
-ENV VITE_NEON_AUTH_URL=$VITE_NEON_AUTH_URL
 
 COPY . .
 RUN npm run build
@@ -19,9 +17,14 @@ FROM node:24-alpine AS runner
 
 WORKDIR /app
 
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs appuser
+
 COPY --from=builder /app/.output ./.output
 
 ENV NODE_ENV=production
+
+USER appuser
 
 EXPOSE 3000
 
