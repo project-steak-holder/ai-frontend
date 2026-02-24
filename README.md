@@ -340,12 +340,11 @@ The project includes a 2-stage Dockerfile. The builder stage compiles the app; t
 
 ```sh
 docker build \
-  --build-arg VITE_AI_SERVICE_BASE_URL=https://your-ai-service \
   --build-arg VITE_NEON_AUTH_URL=https://your-auth-endpoint.neon.tech/auth \
   -t ai-frontend .
 ```
 
-`VITE_*` values are baked into the JS bundle at build time, so a separate image must be built per environment.
+`VITE_NEON_AUTH_URL` is baked into the JS bundle at build time, so a separate image must be built per environment.
 
 **Run the container:**
 
@@ -356,13 +355,13 @@ docker run \
   ai-frontend
 ```
 
-The server listens on port 3000 by default. Override with `-e PORT=8080` if needed.
+The server listens on port 3000 by default.
 
 | Variable | Stage | Description |
 | --- | --- | --- |
-| `VITE_AI_SERVICE_BASE_URL` | Build (`--build-arg`) | Base URL for the AI backend |
 | `VITE_NEON_AUTH_URL` | Build (`--build-arg`) | Neon Auth configuration URL |
 | `DATABASE_URL` | Runtime (`-e`) | Neon PostgreSQL connection string |
+| `AI_SERVICE_BASE_URL` | Runtime (`-e`) | Base URL for the AI backend |
 | `PORT` | Runtime (`-e`) | Server port (default: `3000`) |
 
 ### Environment Variables in Production

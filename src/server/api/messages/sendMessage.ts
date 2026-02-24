@@ -32,20 +32,17 @@ export const sendMessage = createServerFn({
 			throw new Error("Conversation not found");
 		}
 
-		const response = await fetch(
-			`${env.VITE_AI_SERVICE_BASE_URL}/api/v1/generate`,
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${data.token}`,
-				},
-				body: JSON.stringify({
-					conversation_id: data.conversationId,
-					content: data.content,
-				}),
+		const response = await fetch(`${env.AI_SERVICE_BASE_URL}/api/v1/generate`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${data.token}`,
 			},
-		);
+			body: JSON.stringify({
+				conversation_id: data.conversationId,
+				content: data.content,
+			}),
+		});
 
 		if (!response.ok) {
 			let errorMessage = "Failed to send message";

@@ -6,7 +6,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-ARG VITE_AI_SERVICE_BASE_URL
 ARG VITE_NEON_AUTH_URL
 
 COPY . .

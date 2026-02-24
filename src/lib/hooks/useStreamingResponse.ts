@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { env } from "@/env";
 import { authClient } from "@/integrations/neon-auth/client";
 
 interface StreamMessageInput {
@@ -75,21 +74,19 @@ export const useStreamingResponse = () => {
 				throw new Error(error);
 			}
 
-			const response = await fetch(
-				`${env.VITE_AI_SERVICE_BASE_URL}/api/v1/generate`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({
-						conversation_id: conversationId,
-						content,
-						stream: true,
-					}),
+			// TODO: move this fetch to a createServerFn — AI_SERVICE_BASE_URL is server-only
+			const response = await fetch(`/api/v1/generate`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
 				},
-			);
+				body: JSON.stringify({
+					conversation_id: conversationId,
+					content,
+					stream: true,
+				}),
+			});
 
 			if (!response.ok) {
 				let errorMessage = "Failed to stream response";
