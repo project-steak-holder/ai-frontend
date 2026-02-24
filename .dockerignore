@@ -1,0 +1,9 @@
+node_modules/
+.output/
+.git/
+.env
+.env.*
+docs/
+*.md
+.husky/
+coverage/
