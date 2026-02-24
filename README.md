@@ -332,6 +332,39 @@ The build output is in `.output/` directory, ready for deployment to platforms l
 - Cloudflare Pages
 - Any Node.js hosting
 
+### Docker
+
+The project includes a 2-stage Dockerfile. The builder stage compiles the app; the runner stage contains only the `.output/` bundle — no source or `node_modules`.
+
+**Build the image:**
+
+```sh
+docker build \
+  --build-arg VITE_AI_SERVICE_BASE_URL=https://your-ai-service \
+  --build-arg VITE_NEON_AUTH_URL=https://your-auth-endpoint.neon.tech/auth \
+  -t ai-frontend .
+```
+
+`VITE_*` values are baked into the JS bundle at build time, so a separate image must be built per environment.
+
+**Run the container:**
+
+```sh
+docker run \
+  -e DATABASE_URL=postgresql://... \
+  -p 3000:3000 \
+  ai-frontend
+```
+
+The server listens on port 3000 by default. Override with `-e PORT=8080` if needed.
+
+| Variable | Stage | Description |
+| --- | --- | --- |
+| `VITE_AI_SERVICE_BASE_URL` | Build (`--build-arg`) | Base URL for the AI backend |
+| `VITE_NEON_AUTH_URL` | Build (`--build-arg`) | Neon Auth configuration URL |
+| `DATABASE_URL` | Runtime (`-e`) | Neon PostgreSQL connection string |
+| `PORT` | Runtime (`-e`) | Server port (default: `3000`) |
+
 ### Environment Variables in Production
 
 Ensure all environment variables are set in your hosting platform:
