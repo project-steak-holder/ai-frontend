@@ -1,0 +1,14 @@
+node_modules/
+.output/
+.git/
+.env
+.env.*
+*.local
+docs/
+*.md
+.husky/
+coverage/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

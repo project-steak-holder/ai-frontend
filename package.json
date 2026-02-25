@@ -17,7 +17,7 @@
     "biome:fix": "biome format --write && biome lint --fix && biome check --fix",
     "prepare": "husky",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run --coverage.all"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -75,6 +75,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
     "drizzle-kit": "^0.31.9",
     "husky": "^9.1.7",
     "jsdom": "^28.0.0",
