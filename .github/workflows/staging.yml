@@ -53,4 +53,4 @@ jobs:
             DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
             AUTH_URL=${{ secrets.STAGING_AUTH_URL }}
           secrets: |
-            AI_SERVICE_BASE_URL=STAGING_AI_SERVICE_BASE_URL:latest
+            AI_SERVICE_BASE_URL=STAGING_AI_SERVER_URL:latest
