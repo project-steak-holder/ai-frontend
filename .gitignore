@@ -43,6 +43,13 @@ src/routeTree.gen.ts
 coverage
 
 # =====================
+# Testing (Playwright)
+# =====================
+playwright/.auth
+playwright-report
+test-results
+
+# =====================
 # TypeScript
 # =====================
 *.tsbuildinfo

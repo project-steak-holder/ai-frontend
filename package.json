@@ -17,7 +17,9 @@
     "biome:fix": "biome format --write && biome lint --fix && biome check --fix",
     "prepare": "husky",
     "preview": "vite preview",
-    "test": "vitest run --coverage.all"
+    "test": "vitest run --coverage.all",
+    "test:e2e": "playwright test",
+    "test:e2e-setup": "playwright install --with-deps"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -66,6 +68,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.0",
+    "@playwright/test": "^1.58.2",
     "@tanstack/devtools-vite": "^0.5.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.9.1",

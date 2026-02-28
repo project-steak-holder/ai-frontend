@@ -1,14 +1,14 @@
-name: Deploy to Cloud Run
+name: Deploy to Staging
 
 on:
   push:
-    branches: [main]
+    branches: [staging]
 
 jobs:
-  deploy-prod:
+  deploy-staging:
     runs-on: ubuntu-latest
     concurrency:
-      group: deploy-production
+      group: deploy-staging
       cancel-in-progress: true
     permissions:
       contents: read
@@ -35,21 +35,22 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:${{ github.sha }}
-            ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:latest
+            ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:staging-${{ github.sha }}
+            ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:staging-latest
           build-args: |
-            VITE_NEON_AUTH_URL=${{ vars.VITE_NEON_AUTH_URL }}
-          cache-from: type=registry,ref=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:latest
+            VITE_NEON_AUTH_URL=${{ secrets.STAGING_AUTH_URL }}
+          cache-from: type=registry,ref=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:staging-latest
           cache-to: type=inline
 
-      - name: Deploy to production Cloud Run
+      - name: Deploy to staging Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: ${{ vars.CLOUD_RUN_SERVICE }}
+          service: ai-frontend-staging
           region: ${{ vars.GCP_REGION }}
-          image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:${{ github.sha }}
+          image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:staging-${{ github.sha }}
           env_vars: |
             NODE_ENV=production
+            DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
+            AUTH_URL=${{ secrets.STAGING_AUTH_URL }}
           secrets: |
-            DATABASE_URL=DATABASE_URL:latest
-            AI_SERVICE_BASE_URL=AI_SERVICE_BASE_URL:latest
+            AI_SERVICE_BASE_URL=STAGING_AI_SERVER_URL:latest

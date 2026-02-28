@@ -93,6 +93,7 @@ export default function ChatLayout({
 									/>
 								)}
 								<div
+									data-testid={isUserMessage ? "user-message" : "ai-message"}
 									className={cn(
 										"max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-break-word",
 										isUserMessage ? "order-1" : "order-2",
