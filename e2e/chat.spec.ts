@@ -3,13 +3,13 @@ import { test, expect } from "@playwright/test";
 test.describe("chat", () => {
 	test("home page loads and shows new conversation button", async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByRole("button", { name: /new conversation/i })).toBeVisible();
+		await expect(page.getByRole("button", { name: /new conversation/i }).first()).toBeVisible();
 	});
 
 	test("can create a conversation", async ({ page }) => {
 		await page.goto("/");
 
-		await page.getByRole("button", { name: /new conversation/i }).click();
+		await page.getByRole("button", { name: /new conversation/i }).first().click();
 		await expect(page.getByRole("dialog")).toBeVisible();
 
 		await page.getByPlaceholder("Requirements Elicitation").fill("E2E Test Conversation");
@@ -23,7 +23,7 @@ test.describe("chat", () => {
 		await page.goto("/");
 
 		// Create a conversation
-		await page.getByRole("button", { name: /new conversation/i }).click();
+		await page.getByRole("button", { name: /new conversation/i }).first().click();
 		await page.getByPlaceholder("Requirements Elicitation").fill("E2E Test");
 		await page.getByRole("button", { name: "Create" }).click();
 		await page.waitForURL(/\/chat\/.+/);
@@ -47,7 +47,7 @@ test.describe("chat", () => {
 		await page.goto("/");
 
 		// Create a conversation and send a message
-		await page.getByRole("button", { name: /new conversation/i }).click();
+		await page.getByRole("button", { name: /new conversation/i }).first().click();
 		await page.getByPlaceholder("Requirements Elicitation").fill("Persistence Test");
 		await page.getByRole("button", { name: "Create" }).click();
 		await page.waitForURL(/\/chat\/.+/);
