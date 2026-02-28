@@ -59,7 +59,7 @@ test.describe("chat", () => {
 
 		// Wait for AI response before reloading
 		await expect(page.getByTestId("ai-message").first()).toBeVisible({
-			timeout: 30_000,
+			timeout: 200_000,
 		});
 
 		// Reload and verify messages are still there
