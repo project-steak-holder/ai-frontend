@@ -18,8 +18,13 @@ export default defineConfig({
 	},
 	projects: [
 		{
+			name: "cleanup",
+			testMatch: /.*\.cleanup\.setup\.ts/,
+		},
+		{
 			name: "setup",
-			testMatch: /.*\.setup\.ts/,
+			testMatch: /.*auth\.setup\.ts/,
+			dependencies: ["cleanup"],
 		},
 		{
 			name: "chromium",
