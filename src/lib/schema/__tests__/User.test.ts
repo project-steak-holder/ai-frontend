@@ -1,5 +1,5 @@
 import { assertType, describe, expectTypeOf, it } from "vitest";
-import type { User, NewUser, UpdateUser } from "../User";
+import type { NewUser, UpdateUser, User } from "../User";
 
 describe("User Types", () => {
 	it("should have correct User type structure", () => {

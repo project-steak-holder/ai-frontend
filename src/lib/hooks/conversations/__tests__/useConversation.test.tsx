@@ -16,8 +16,7 @@ vi.mock("@/integrations/neon-auth/client", () => ({
 const mockGetConversationById = vi.fn();
 
 vi.mock("@server/api/conversations", () => ({
-	getConversationById: (...args: unknown[]) =>
-		mockGetConversationById(...args),
+	getConversationById: (...args: unknown[]) => mockGetConversationById(...args),
 }));
 
 // ---------------------------------------------------------------------------
@@ -44,10 +43,9 @@ describe("useConversation", () => {
 			name: "Test Chat",
 		});
 
-		const { result } = renderHook(
-			() => useConversation("conv-1"),
-			{ wrapper: createWrapper() },
-		);
+		const { result } = renderHook(() => useConversation("conv-1"), {
+			wrapper: createWrapper(),
+		});
 
 		await waitFor(() => expect(result.current.isLoading).toBe(false));
 		expect(result.current.conversation?.id).toBe("conv-1");
@@ -59,10 +57,9 @@ describe("useConversation", () => {
 			new Error("Conversation not found"),
 		);
 
-		const { result } = renderHook(
-			() => useConversation("conv-missing"),
-			{ wrapper: createWrapper() },
-		);
+		const { result } = renderHook(() => useConversation("conv-missing"), {
+			wrapper: createWrapper(),
+		});
 
 		await waitFor(() => expect(result.current.error).toBeTruthy());
 		expect(result.current.conversation).toBeUndefined();
@@ -71,10 +68,9 @@ describe("useConversation", () => {
 	it("returns isLoading true while fetching", () => {
 		mockGetConversationById.mockReturnValue(new Promise(() => {})); // never resolves
 
-		const { result } = renderHook(
-			() => useConversation("conv-1"),
-			{ wrapper: createWrapper() },
-		);
+		const { result } = renderHook(() => useConversation("conv-1"), {
+			wrapper: createWrapper(),
+		});
 
 		expect(result.current.isLoading).toBe(true);
 	});
