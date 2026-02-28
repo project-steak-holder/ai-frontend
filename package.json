@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "check": "biome check",
+    "check": "biome check --no-errors-on-unmatched",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:pull": "npm run db:pull:auth && npm run db:pull:public",
