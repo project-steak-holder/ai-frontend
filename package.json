@@ -18,7 +18,8 @@
     "prepare": "husky",
     "preview": "vite preview",
     "test": "vitest run --coverage.all",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e-setup": "playwright install --with-deps"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
