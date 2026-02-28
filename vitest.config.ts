@@ -27,7 +27,7 @@ export default defineConfig({
 				"src/integrations/**",
 				"src/routes/**",
 				"src/lib/db/**",
-				"src/lib/hooks/useStreamingResponse.ts",
+				"src/lib/hooks/messages/useStreamingResponse.ts",
 				"src/server/**",
 			],
 			include: ["src/**/*.{ts,tsx}"],
