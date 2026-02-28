@@ -5,14 +5,14 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  deploy-prod:
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-production
       cancel-in-progress: true
     permissions:
       contents: read
-      id-token: write   # required for Workload Identity Federation
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
           cache-from: type=registry,ref=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:latest
           cache-to: type=inline
 
-      - name: Deploy to Cloud Run
+      - name: Deploy to production Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ vars.CLOUD_RUN_SERVICE }}
