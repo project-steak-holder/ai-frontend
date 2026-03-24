@@ -4,9 +4,7 @@ import type { SubmitEventHandler } from "react";
 import { z } from "zod";
 import ChatLayout from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/integrations/neon-auth/client";
-import { useSendMessage } from "@/lib/hooks/messages/useSendMessage";
-import { guard } from "@/lib/utils";
+import { useStreamingResponse } from "@/lib/hooks/messages";
 
 const ConversationIdSchema = z.uuid();
 
@@ -21,15 +19,8 @@ export const Route = createFileRoute("/chat/$conversationId")({
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
-	const { data: session } = authClient.useSession();
-	const userId = session?.user?.id;
-	const { mutateAsync: sendMessage, isPending } = useSendMessage();
-
-	const handleSendMessage = async (message: string) => {
-		const safeUserId = guard(userId, "You must be signed in to send a message");
-
-		await sendMessage({ conversationId, content: message, userId: safeUserId });
-	};
+	const { streamMessage, streamedText, isStreaming } =
+		useStreamingResponse(conversationId);
 
 	const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
 		e.preventDefault();
@@ -37,19 +28,17 @@ function ChatPage() {
 			"message",
 		) as HTMLInputElement;
 		if (!input.value.trim()) return;
-		handleSendMessage(input.value)
-			.then(() => {
-				input.value = "";
-			})
-			.catch(() => {});
+		streamMessage(input.value);
+		input.value = "";
 	};
+
 	return (
 		<div className="flex flex-col h-full">
 			<SignedIn>
 				<div className="flex-1 min-h-0 p-4">
 					<ChatLayout
 						conversationId={conversationId}
-						waitingOnResponse={isPending}
+						streamedText={isStreaming ? streamedText : undefined}
 					/>
 				</div>
 
@@ -60,7 +49,7 @@ function ChatPage() {
 							type="text"
 							placeholder="Type a message..."
 							autoComplete="off"
-							disabled={isPending}
+							disabled={isStreaming}
 						/>
 					</form>
 				</div>
