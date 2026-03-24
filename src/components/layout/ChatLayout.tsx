@@ -9,12 +9,12 @@ import { ScrollArea } from "../ui/scroll-area";
 
 interface ChatLayoutProps {
 	conversationId: string;
-	waitingOnResponse?: boolean;
+	streamedText?: string;
 }
 
 export default function ChatLayout({
 	conversationId,
-	waitingOnResponse,
+	streamedText,
 }: ChatLayoutProps) {
 	const scrollAreaContainerRef = useRef<HTMLDivElement | null>(null);
 	const {
@@ -26,7 +26,7 @@ export default function ChatLayout({
 
 	useEffect(() => {
 		if (!conversationId) return;
-		if (messageCount === 0 && !waitingOnResponse) return;
+		if (messageCount === 0 && !streamedText) return;
 
 		const viewport = scrollAreaContainerRef.current?.querySelector(
 			'[data-slot="scroll-area-viewport"]',
@@ -35,7 +35,7 @@ export default function ChatLayout({
 		if (!viewport) return;
 
 		viewport.scrollTop = viewport.scrollHeight;
-	}, [conversationId, messageCount, waitingOnResponse]);
+	}, [conversationId, messageCount, streamedText]);
 
 	if (isLoading) {
 		return (
@@ -107,10 +107,14 @@ export default function ChatLayout({
 							</div>
 						);
 					})}
-					{waitingOnResponse && (
-						<div className="flex w-full justify-start">
-							<div className="rounded-2xl px-4 py-2 text-sm bg-muted text-foreground rounded-bl-sm">
-								<ThreeDotsMoveIcon />
+					{streamedText != null && (
+						<div className="flex w-full items-center gap-2 justify-start">
+							<UserRound className="h-4 w-4 shrink-0 text-muted-foreground order-1" />
+							<div
+								data-testid="ai-message-streaming"
+								className="max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-break-word order-2 bg-muted text-foreground rounded-bl-sm"
+							>
+								{streamedText || <ThreeDotsMoveIcon />}
 							</div>
 						</div>
 					)}
