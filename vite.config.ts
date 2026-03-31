@@ -24,7 +24,9 @@ const config = defineConfig({
 	},
 	plugins: [
 		devtools(),
-		nitro(),
+		nitro({
+			plugins: ["src/server/plugins/security-headers"],
+		}),
 		viteTsConfigPaths({
 			projects: ["./tsconfig.json"],
 		}),
