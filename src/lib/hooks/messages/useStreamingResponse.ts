@@ -75,7 +75,8 @@ async function* parseSSEStream(
 				}
 
 				if ("error" in event) {
-					throw new Error(event.error);
+					yield event.error;
+					return;
 				}
 
 				if ("complete" in event) {
