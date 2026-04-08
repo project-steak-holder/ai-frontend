@@ -29,7 +29,7 @@ export default defineConfig({
 				"src/routes/**",
 				"src/lib/db/**",
 				"src/lib/hooks/messages/useStreamingResponse.ts",
-				"src/server/**",
+				"src/server/plugins/**",
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			thresholds: {
