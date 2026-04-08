@@ -50,6 +50,41 @@ describe("useErrorLogger", () => {
 		setItemSpy.mockRestore();
 	});
 
+	it("warns when sessionStorage throws in development", () => {
+		const consoleErrorSpy = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
+		const consoleWarnSpy = vi
+			.spyOn(console, "warn")
+			.mockImplementation(() => {});
+		const setItemSpy = vi
+			.spyOn(Storage.prototype, "setItem")
+			.mockImplementation(() => {
+				throw new Error("Storage full");
+			});
+
+		const error: CapturedError = {
+			message: "Test error",
+			stack: "Error: Test error",
+			componentStack: "  in Component",
+			boundaryName: "RootErrorBoundary",
+			timestamp: new Date(),
+			userAgent: "test",
+			environment: "development",
+		};
+
+		renderHook(() => useErrorLogger(error));
+
+		expect(consoleWarnSpy).toHaveBeenCalledWith(
+			"[Error Boundary] Failed to persist error in sessionStorage",
+			expect.any(Error),
+		);
+
+		consoleErrorSpy.mockRestore();
+		consoleWarnSpy.mockRestore();
+		setItemSpy.mockRestore();
+	});
+
 	it("does not store in sessionStorage in production", () => {
 		const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
 
