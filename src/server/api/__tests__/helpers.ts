@@ -93,10 +93,8 @@ export function createDbChainMock(): ChainMock {
 	const proxyHandler: ProxyHandler<object> = {
 		get(_target, prop) {
 			if (prop === "then") {
-				return (
-					resolve: (v: unknown) => void,
-					reject: (e: unknown) => void,
-				) => terminalValue.then(resolve, reject);
+				return (resolve: (v: unknown) => void, reject: (e: unknown) => void) =>
+					terminalValue.then(resolve, reject);
 			}
 			if (prop in chain) {
 				return (...args: unknown[]) => {

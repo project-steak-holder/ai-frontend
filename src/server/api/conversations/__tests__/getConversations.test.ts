@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	type ChainMock,
-	type ServerFn,
-	VALID_USER_ID,
 	createDbChainMock,
 	mockCreateServerFn,
+	type ServerFn,
+	VALID_USER_ID,
 } from "../../__tests__/helpers";
 
 // ---------------------------------------------------------------------------
@@ -74,7 +74,9 @@ describe("getConversations", () => {
 	});
 
 	it("throws on missing userId", async () => {
-		await expect((getConversations as unknown as ServerFn)({})).rejects.toThrow();
+		await expect(
+			(getConversations as unknown as ServerFn)({}),
+		).rejects.toThrow();
 	});
 
 	it("propagates database errors", async () => {

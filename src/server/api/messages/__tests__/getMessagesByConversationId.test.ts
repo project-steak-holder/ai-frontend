@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	mockCreateServerFn,
 	type ServerFn,
 	VALID_CONVERSATION_ID,
 	VALID_USER_ID,
-	mockCreateServerFn,
 } from "../../__tests__/helpers";
 
 // ---------------------------------------------------------------------------
@@ -56,7 +56,11 @@ vi.mock("@/lib/db", () => ({
 													return (
 														_resolve: (v: unknown) => void,
 														reject: (e: unknown) => void,
-													) => Promise.reject(messagesError).then(_resolve, reject);
+													) =>
+														Promise.reject(messagesError).then(
+															_resolve,
+															reject,
+														);
 												}
 												const data = messagesResult;
 												return (

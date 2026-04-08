@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	mockCreateServerFn,
 	type ServerFn,
 	VALID_CONVERSATION_ID,
 	VALID_USER_ID,
-	mockCreateServerFn,
 } from "../../__tests__/helpers";
 
 // ---------------------------------------------------------------------------
@@ -143,7 +143,10 @@ describe("sendMessage", () => {
 
 	it("throws on invalid conversationId", async () => {
 		await expect(
-			(sendMessage as unknown as ServerFn)({ ...validInput, conversationId: "bad" }),
+			(sendMessage as unknown as ServerFn)({
+				...validInput,
+				conversationId: "bad",
+			}),
 		).rejects.toThrow();
 	});
 
@@ -164,9 +167,7 @@ describe("sendMessage", () => {
 	});
 
 	it("propagates fetch errors", async () => {
-		vi.spyOn(globalThis, "fetch").mockRejectedValue(
-			new Error("network error"),
-		);
+		vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network error"));
 
 		await expect(
 			(sendMessage as unknown as ServerFn)(validInput),

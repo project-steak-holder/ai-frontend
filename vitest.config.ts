@@ -21,15 +21,7 @@ export default defineConfig({
 				"**/dist/**",
 				"**/coverage/**",
 				"src/routeTree.gen.ts",
-				"src/components/ui/**",
-				"src/env.ts",
-				"src/router.tsx",
-				"src/styles.css",
-				"src/integrations/**",
-				"src/routes/**",
-				"src/lib/db/**",
-				"src/lib/hooks/messages/useStreamingResponse.ts",
-				"src/server/plugins/**",
+				"src/components/ui/**"
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			thresholds: {

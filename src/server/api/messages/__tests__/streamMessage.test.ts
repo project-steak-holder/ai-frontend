@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	mockCreateServerFn,
 	type ServerFn,
 	VALID_CONVERSATION_ID,
 	VALID_USER_ID,
-	mockCreateServerFn,
 } from "../../__tests__/helpers";
 
 // ---------------------------------------------------------------------------
@@ -161,7 +161,10 @@ describe("streamMessage", () => {
 
 	it("throws on invalid conversationId", async () => {
 		await expect(
-			(streamMessage as unknown as ServerFn)({ ...validInput, conversationId: "bad" }),
+			(streamMessage as unknown as ServerFn)({
+				...validInput,
+				conversationId: "bad",
+			}),
 		).rejects.toThrow();
 	});
 
@@ -182,9 +185,7 @@ describe("streamMessage", () => {
 	});
 
 	it("propagates fetch errors", async () => {
-		vi.spyOn(globalThis, "fetch").mockRejectedValue(
-			new Error("network error"),
-		);
+		vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network error"));
 
 		await expect(
 			(streamMessage as unknown as ServerFn)(validInput),
