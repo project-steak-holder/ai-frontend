@@ -12,10 +12,7 @@ interface ChatLayoutProps {
 	streamedText?: string;
 }
 
-export default function ChatLayout({
-	conversationId,
-	streamedText,
-}: ChatLayoutProps) {
+export function ChatLayout({ conversationId, streamedText }: ChatLayoutProps) {
 	const scrollAreaContainerRef = useRef<HTMLDivElement | null>(null);
 	const {
 		data: messages,
