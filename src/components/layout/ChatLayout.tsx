@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useMessagesByConversationId } from "@/lib/hooks/messages";
 import type { Message } from "@/lib/schema/Message";
 import { cn } from "@/lib/utils";
-import ThreeDotsMoveIcon from "../ui/3DotsMoveIcon";
+import { ThreeDotsMoveIcon } from "../ui/3DotsMoveIcon";
 import { ScrollArea } from "../ui/scroll-area";
 
 interface ChatLayoutProps {

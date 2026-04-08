@@ -12,7 +12,7 @@ import { RouteErrorBoundary } from "@/components/error-handling/RouteErrorBounda
 import { SideBar } from "@/components/layout/SideBar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Header from "../components/layout/Header";
+import { Header } from "../components/layout/Header";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
