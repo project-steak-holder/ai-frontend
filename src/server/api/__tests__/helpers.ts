@@ -52,6 +52,7 @@ export interface ChainMock {
 	limit: Mock;
 	update: Mock;
 	set: Mock;
+	delete: Mock;
 	/** Resolve the terminal operation (returning / limit / orderBy) with `data`. */
 	resolveWith: (data: unknown) => void;
 	/** Make the terminal operation reject with `error`. */
@@ -97,6 +98,7 @@ export function createDbChainMock(): ChainMock {
 		limit: vi.fn(),
 		update: vi.fn(),
 		set: vi.fn(),
+		delete: vi.fn(),
 
 		resolveWith(data: unknown) {
 			sequence = null;
@@ -142,6 +144,7 @@ export function createDbChainMock(): ChainMock {
 		"limit",
 		"update",
 		"set",
+		"delete",
 	] as const) {
 		chain[key] = vi.fn().mockImplementation(() => new Proxy({}, proxyHandler));
 	}
