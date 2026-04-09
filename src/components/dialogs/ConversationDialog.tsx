@@ -32,7 +32,7 @@ export function CreateConversationDialog() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="w-full">New Conversation</Button>
+				<Button className="w-full truncate">New Conversation</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>

@@ -12,10 +12,10 @@ export const SideBar = () => {
 	const { conversationId } = useParams({ strict: false });
 
 	return (
-		<div className="h-full w-64 flex flex-col bg-sidebar overflow-hidden">
+		<div className="h-full w-48 md:w-64 shrink-0 flex flex-col bg-sidebar overflow-hidden">
 			<div className="px-4 h-16 flex items-center justify-center shrink-0">
 				<Link to="/" className="hover:text-primary transition-colors">
-					<h2 className="text-xl font-semibold text-foreground">
+					<h2 className="text-xl font-semibold text-foreground truncate">
 						Stakeholder AI Chat
 					</h2>
 				</Link>

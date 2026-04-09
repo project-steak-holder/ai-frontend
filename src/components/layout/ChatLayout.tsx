@@ -1,18 +1,25 @@
-import { UserAvatar } from "@neondatabase/neon-js/auth/react";
 import { UserRound } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useMessagesByConversationId } from "@/lib/hooks/messages";
 import type { Message } from "@/lib/schema/Message";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ThreeDotsMoveIcon } from "../ui/3DotsMoveIcon";
 import { ScrollArea } from "../ui/scroll-area";
 
 interface ChatLayoutProps {
 	conversationId: string;
 	streamedText?: string;
+	user?: { name: string; image?: string | null };
 }
 
-export function ChatLayout({ conversationId, streamedText }: ChatLayoutProps) {
+function getInitials(name: string): string {
+	const parts = name.trim().split(/\s+/);
+	if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+	return name.slice(0, 2).toUpperCase();
+}
+
+export function ChatLayout({ conversationId, streamedText, user }: ChatLayoutProps) {
 	const scrollAreaContainerRef = useRef<HTMLDivElement | null>(null);
 	const {
 		data: messages,
@@ -74,25 +81,24 @@ export function ChatLayout({ conversationId, streamedText }: ChatLayoutProps) {
 								)}
 							>
 								{isUserMessage ? (
-									<UserAvatar
-										size={"lg"}
-										className={cn(
-											"h-8 w-8 shrink-0 text-muted-foreground",
-											isUserMessage ? "order-2" : "order-1",
-										)}
-									/>
+									<Avatar size="sm" className="order-2 shrink-0">
+										{user?.image && <AvatarImage src={user.image} alt={user.name} />}
+										<AvatarFallback>
+											{user ? getInitials(user.name) : <UserRound className="h-3 w-3" />}
+										</AvatarFallback>
+									</Avatar>
 								) : (
 									<UserRound
 										className={cn(
 											"h-4 w-4 shrink-0 text-muted-foreground",
-											isUserMessage ? "order-2" : "order-1",
+											"order-1",
 										)}
 									/>
 								)}
 								<div
 									data-testid={isUserMessage ? "user-message" : "ai-message"}
 									className={cn(
-										"max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-break-word",
+										"max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-anywhere overflow-hidden",
 										isUserMessage ? "order-1" : "order-2",
 										isUserMessage
 											? "bg-primary text-primary-foreground rounded-br-sm"
@@ -109,7 +115,7 @@ export function ChatLayout({ conversationId, streamedText }: ChatLayoutProps) {
 							<UserRound className="h-4 w-4 shrink-0 text-muted-foreground order-1" />
 							<div
 								data-testid="ai-message-streaming"
-								className="max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-break-word order-2 bg-muted text-foreground rounded-bl-sm"
+								className="max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-anywhere overflow-hidden order-2 bg-muted text-foreground rounded-bl-sm"
 							>
 								{streamedText || <ThreeDotsMoveIcon />}
 							</div>

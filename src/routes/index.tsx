@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
 	return (
-		<div className="min-h-screen bg-background text-foreground">
+		<div className="bg-background text-foreground">
 			<section className="relative py-20 px-6 text-center">
 				<div className="relative max-w-5xl mx-auto">
 					<SignedIn>
@@ -19,7 +19,7 @@ function Home() {
 							Your conversations are waiting. Select one from the sidebar or
 							create a new one to get started.
 						</p>
-						<div className="w-[15%] h-20 mx-auto">
+						<div className="w-[15%] min-w-fit h-20 mx-auto">
 							<CreateConversationDialog />
 						</div>
 					</SignedIn>
