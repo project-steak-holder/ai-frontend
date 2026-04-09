@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	createDbChainMock,
 	mockCreateServerFn,
 	type ServerFn,
 	VALID_CONVERSATION_ID,
@@ -11,6 +12,7 @@ import {
 // ---------------------------------------------------------------------------
 
 let ownershipResult: unknown[];
+const dbMock = createDbChainMock();
 
 vi.mock("@tanstack/react-start", () => ({
 	createServerFn: mockCreateServerFn(),
@@ -18,38 +20,7 @@ vi.mock("@tanstack/react-start", () => ({
 
 vi.mock("@/lib/db", () => ({
 	get db() {
-		return new Proxy(
-			{},
-			{
-				get(_, prop) {
-					if (prop === "select") {
-						return (..._args: unknown[]) => {
-							const makeChainable = (): unknown =>
-								new Proxy(
-									{},
-									{
-										get(__, p) {
-											if (p === "then") {
-												return (
-													resolve: (v: unknown) => void,
-													reject: (e: unknown) => void,
-												) =>
-													Promise.resolve(ownershipResult).then(
-														resolve,
-														reject,
-													);
-											}
-											return (..._a: unknown[]) => makeChainable();
-										},
-									},
-								);
-							return makeChainable();
-						};
-					}
-					return () => {};
-				},
-			},
-		);
+		return dbMock;
 	},
 }));
 
@@ -81,6 +52,7 @@ const validInput = {
 describe("sendMessage", () => {
 	beforeEach(() => {
 		ownershipResult = [{ id: VALID_CONVERSATION_ID }];
+		dbMock.resolveWithSequence([ownershipResult]);
 		vi.clearAllMocks();
 	});
 
@@ -113,6 +85,7 @@ describe("sendMessage", () => {
 
 	it("throws when conversation not found (ownership)", async () => {
 		ownershipResult = [];
+		dbMock.resolveWithSequence([ownershipResult]);
 
 		await expect(
 			(sendMessage as unknown as ServerFn)(validInput),

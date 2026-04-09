@@ -56,6 +56,12 @@ export interface ChainMock {
 	resolveWith: (data: unknown) => void;
 	/** Make the terminal operation reject with `error`. */
 	rejectWith: (error: Error) => void;
+	/**
+	 * Feed values in order per `.then()` call.
+	 * First `await` resolves with `values[0]`, second with `values[1]`, etc.
+	 * After exhaustion, subsequent calls resolve with `undefined`.
+	 */
+	resolveWithSequence: (values: unknown[]) => void;
 }
 
 /**
@@ -67,6 +73,18 @@ export interface ChainMock {
  */
 export function createDbChainMock(): ChainMock {
 	let terminalValue: Promise<unknown> = Promise.resolve([]);
+	let sequence: unknown[] | null = null;
+	let sequenceIndex = 0;
+
+	function getTerminalValue(): Promise<unknown> {
+		if (sequence) {
+			const value =
+				sequenceIndex < sequence.length ? sequence[sequenceIndex] : undefined;
+			sequenceIndex++;
+			return Promise.resolve(value);
+		}
+		return terminalValue;
+	}
 
 	const chain: ChainMock = {
 		insert: vi.fn(),
@@ -81,10 +99,16 @@ export function createDbChainMock(): ChainMock {
 		set: vi.fn(),
 
 		resolveWith(data: unknown) {
+			sequence = null;
 			terminalValue = Promise.resolve(data);
 		},
 		rejectWith(error: Error) {
+			sequence = null;
 			terminalValue = Promise.reject(error);
+		},
+		resolveWithSequence(values: unknown[]) {
+			sequence = values;
+			sequenceIndex = 0;
 		},
 	};
 
@@ -94,7 +118,7 @@ export function createDbChainMock(): ChainMock {
 		get(_target, prop) {
 			if (prop === "then") {
 				return (resolve: (v: unknown) => void, reject: (e: unknown) => void) =>
-					terminalValue.then(resolve, reject);
+					getTerminalValue().then(resolve, reject);
 			}
 			if (prop in chain) {
 				return (...args: unknown[]) => {
