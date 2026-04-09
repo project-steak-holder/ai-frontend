@@ -1,3 +1,4 @@
+import { authClient } from "@integrations/neon-auth/client";
 import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { SubmitEventHandler } from "react";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/chat/$conversationId")({
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
+	const { data: session } = authClient.useSession();
 	const { streamMessage, streamedText, isStreaming } =
 		useStreamingResponse(conversationId);
 
@@ -39,6 +41,7 @@ function ChatPage() {
 					<ChatLayout
 						conversationId={conversationId}
 						streamedText={isStreaming ? streamedText : undefined}
+						user={session?.user}
 					/>
 				</div>
 
