@@ -52,6 +52,7 @@ function ChatPage() {
 							type="text"
 							placeholder="Type a message..."
 							autoComplete="off"
+							maxLength={5000}
 							disabled={isStreaming}
 						/>
 					</form>
