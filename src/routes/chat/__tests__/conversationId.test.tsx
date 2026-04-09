@@ -9,7 +9,7 @@ const mockStreamMessage = vi.fn();
 const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
 const mockUseStreamingResponse = vi.fn().mockReturnValue({
-	streamMessage: mockStreamMessage,
+	sendMessage: mockStreamMessage,
 	streamedText: "",
 	isStreaming: false,
 });
@@ -66,7 +66,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockUseStreamingResponse.mockReturnValue({
-			streamMessage: mockStreamMessage,
+			sendMessage: mockStreamMessage,
 			streamedText: "",
 			isStreaming: false,
 		});
@@ -235,7 +235,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 	describe("streaming state", () => {
 		it("disables input when streaming", async () => {
 			mockUseStreamingResponse.mockReturnValue({
-				streamMessage: mockStreamMessage,
+				sendMessage: mockStreamMessage,
 				streamedText: "Streaming...",
 				isStreaming: true,
 			});
@@ -252,7 +252,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 
 		it("passes streamedText to ChatLayout when streaming", async () => {
 			mockUseStreamingResponse.mockReturnValue({
-				streamMessage: mockStreamMessage,
+				sendMessage: mockStreamMessage,
 				streamedText: "Partial response...",
 				isStreaming: true,
 			});
@@ -270,7 +270,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 
 		it("does not pass streamedText to ChatLayout when not streaming", async () => {
 			mockUseStreamingResponse.mockReturnValue({
-				streamMessage: mockStreamMessage,
+				sendMessage: mockStreamMessage,
 				streamedText: "leftover text",
 				isStreaming: false,
 			});

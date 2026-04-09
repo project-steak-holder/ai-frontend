@@ -181,6 +181,8 @@ export const useStreamingResponse = (conversationId: string) => {
 		}
 
 		if (query.isError) {
+			const messagesKey = ["messages", userId, conversationId];
+			queryClient.removeQueries({ queryKey: messagesKey });
 			setStreamRequest(null);
 			toast.error("Error streaming response");
 		}
@@ -230,7 +232,7 @@ export const useStreamingResponse = (conversationId: string) => {
 	const isActive = !!streamRequest;
 
 	return {
-		streamMessage: sendMessage,
+		sendMessage,
 		streamedText: isActive ? (query.data ?? "") : "",
 		isStreaming: isActive,
 		streamError: query.error?.message ?? null,

@@ -1,7 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Message } from "@/lib/schema/Message";
+
+const mockToastError = vi.fn();
+
+vi.mock("sonner", () => ({
+	toast: {
+		error: (...args: unknown[]) => mockToastError(...args),
+	},
+}));
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -64,6 +72,7 @@ describe("useStreamingResponse", () => {
 
 	beforeEach(async () => {
 		mockStreamMessage.mockReset();
+		mockToastError.mockReset();
 
 		const { authClient } = await import("@/integrations/neon-auth/client");
 		mockGetSession = vi.mocked(authClient.getSession);
@@ -88,7 +97,7 @@ describe("useStreamingResponse", () => {
 		expect(result.current.isStreaming).toBe(false);
 		expect(result.current.streamedText).toBe("");
 		expect(result.current.streamError).toBeNull();
-		expect(result.current.streamMessage).toBeInstanceOf(Function);
+		expect(result.current.sendMessage).toBeInstanceOf(Function);
 	});
 
 	it("injects optimistic user message into cache on sendMessage", async () => {
@@ -120,7 +129,7 @@ describe("useStreamingResponse", () => {
 		});
 
 		act(() => {
-			result.current.streamMessage("Hello AI");
+			result.current.sendMessage("Hello AI");
 		});
 
 		const cached = queryClient.getQueryData<Message[]>([
@@ -149,7 +158,7 @@ describe("useStreamingResponse", () => {
 		});
 
 		act(() => {
-			result.current.streamMessage("Hello");
+			result.current.sendMessage("Hello");
 		});
 
 		expect(result.current.isStreaming).toBe(true);
@@ -168,7 +177,7 @@ describe("useStreamingResponse", () => {
 		});
 
 		act(() => {
-			result.current.streamMessage("New message");
+			result.current.sendMessage("New message");
 		});
 
 		const cached = queryClient.getQueryData<Message[]>([
@@ -196,9 +205,142 @@ describe("useStreamingResponse", () => {
 		});
 
 		act(() => {
-			result.current.streamMessage("First");
+			result.current.sendMessage("First");
 		});
 
 		expect(result.current.isStreaming).toBe(true);
+	});
+
+	it("shows toast error when streaming query fails", async () => {
+		const { useStreamingResponse } = await import("../useStreamingResponse");
+		const { wrapper, queryClient } = createWrapper();
+
+		mockStreamMessage.mockRejectedValue(new Error("Stream failed"));
+
+		const { result } = renderHook(() => useStreamingResponse("conv-1"), {
+			wrapper,
+		});
+
+		act(() => {
+			result.current.sendMessage("Fail message");
+		});
+
+		await waitFor(() => {
+			expect(result.current.isStreaming).toBe(false);
+		});
+
+		expect(mockToastError).toHaveBeenCalledWith("Error streaming response");
+
+		// Verify optimistic message was rolled back from cache
+		const messagesKey = ["messages", "user-1", "conv-1"];
+		const cachedMessages = queryClient.getQueryData<Message[]>(messagesKey);
+		expect(cachedMessages).toBeUndefined();
+	});
+
+	it("resets isStreaming to false after stream error", async () => {
+		const { useStreamingResponse } = await import("../useStreamingResponse");
+		const { wrapper, queryClient } = createWrapper();
+
+		mockStreamMessage.mockRejectedValue(new Error("Stream failed"));
+
+		const { result } = renderHook(() => useStreamingResponse("conv-1"), {
+			wrapper,
+		});
+
+		act(() => {
+			result.current.sendMessage("Fail message");
+		});
+
+		expect(result.current.isStreaming).toBe(true);
+
+		await waitFor(() => {
+			expect(result.current.isStreaming).toBe(false);
+		});
+
+		// Verify optimistic message was rolled back from cache
+		const messagesKey = ["messages", "user-1", "conv-1"];
+		const cachedMessages = queryClient.getQueryData<Message[]>(messagesKey);
+		expect(cachedMessages).toBeUndefined();
+	});
+
+	it("resets isStreaming and clears streamedText after successful stream completion", async () => {
+		const { useStreamingResponse } = await import("../useStreamingResponse");
+		const { queryClient, wrapper } = createWrapper();
+
+		// Mock successful stream with content and completion event
+		mockStreamMessage.mockResolvedValue(
+			createReadableStream([
+				'data:{"content":"Hello","partial":true}\n',
+				'data:{"complete":true}\n',
+			]),
+		);
+
+		const { result } = renderHook(() => useStreamingResponse("conv-1"), {
+			wrapper,
+		});
+
+		act(() => {
+			result.current.sendMessage("Test message");
+		});
+
+		expect(result.current.isStreaming).toBe(true);
+		expect(result.current.streamedText).toBe("");
+
+		// Wait for stream to complete and isStreaming to reset
+		await waitFor(() => {
+			expect(result.current.isStreaming).toBe(false);
+		});
+
+		expect(result.current.streamedText).toBe("");
+	});
+
+	it("invalidates messages query after successful stream completion", async () => {
+		const { useStreamingResponse } = await import("../useStreamingResponse");
+		const { queryClient, wrapper } = createWrapper();
+
+		// Set initial cached messages
+		const initialMessages = [
+			{
+				id: "msg-1",
+				conversationId: "conv-1",
+				userId: "user-1",
+				content: "Initial message",
+				type: "USER" as const,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			},
+		];
+		queryClient.setQueryData(["messages", "user-1", "conv-1"], initialMessages);
+
+		const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+		mockStreamMessage.mockResolvedValue(
+			createReadableStream([
+				'data:{"content":"Response","partial":true}\n',
+				'data:{"complete":true}\n',
+			]),
+		);
+
+		const { result } = renderHook(() => useStreamingResponse("conv-1"), {
+			wrapper,
+		});
+
+		act(() => {
+			result.current.sendMessage("User message");
+		});
+
+		// Wait for stream to complete
+		await waitFor(() => {
+			expect(result.current.isStreaming).toBe(false);
+		});
+
+		// Verify invalidateQueries was called with the correct key
+		await waitFor(() => {
+			expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+				queryKey: ["messages", "user-1", "conv-1"],
+			});
+		});
+
+		invalidateQueriesSpy.mockRestore();
 	});
 });

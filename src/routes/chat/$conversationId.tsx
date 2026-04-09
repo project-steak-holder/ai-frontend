@@ -20,7 +20,7 @@ export const Route = createFileRoute("/chat/$conversationId")({
 function ChatPage() {
 	const { conversationId } = Route.useParams();
 	const { data: session } = authClient.useSession();
-	const { streamMessage, streamedText, isStreaming } =
+	const { sendMessage, streamedText, isStreaming } =
 		useStreamingResponse(conversationId);
 
 	const handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void = (e) => {
@@ -29,7 +29,7 @@ function ChatPage() {
 			"message",
 		) as HTMLInputElement;
 		if (!input.value.trim()) return;
-		streamMessage(input.value);
+		sendMessage(input.value);
 		input.value = "";
 	};
 
