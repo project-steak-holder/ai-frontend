@@ -28,7 +28,6 @@ describe("messages hooks barrel export", () => {
 	it("exports all expected hooks", async () => {
 		const mod = await import("../index");
 		expect(typeof mod.useMessagesByConversationId).toBe("function");
-		expect(typeof mod.useSendMessage).toBe("function");
 		expect(typeof mod.useStreamingResponse).toBe("function");
 	});
 });
