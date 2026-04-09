@@ -1,15 +1,14 @@
-import { updateConversation } from "@server/api/conversations";
+import { deleteConversation } from "@server/api/conversations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
 import { guard } from "@/lib/utils";
 
-interface UpdateConversationInput {
+interface DeleteConversationInput {
 	id: string;
-	name: string;
 }
 
-export function useUpdateConversation() {
+export function useDeleteConversation() {
 	const { data: session } = authClient.useSession();
 	const userId = session?.user?.id;
 
@@ -17,17 +16,15 @@ export function useUpdateConversation() {
 
 	return useMutation({
 		mutationKey: ["conversations", userId],
-		mutationFn: async ({ id, name }: UpdateConversationInput) => {
+		mutationFn: async ({ id }: DeleteConversationInput) => {
 			const safeUserId = guard(
 				userId,
-				"You must be signed in to update a conversation",
+				"You must be signed in to delete a conversation",
 			);
-
-			return await updateConversation({
+			return await deleteConversation({
 				data: {
 					id,
 					userId: safeUserId,
-					name,
 				},
 			});
 		},
@@ -38,10 +35,10 @@ export function useUpdateConversation() {
 			await queryClient.invalidateQueries({
 				queryKey: ["conversation", id, userId],
 			});
-			toast.success("Conversation updated");
+			toast.success("Conversation deleted");
 		},
 		onError: () => {
-			toast.error("Error updating conversation");
+			toast.error("Error deleting conversation");
 		},
 	});
 }

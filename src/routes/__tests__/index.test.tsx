@@ -26,7 +26,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@/components/dialogs/ConversationDialog", () => ({
-	CreateConversationDialog: () => (
+	ConversationDialog: () => (
 		<button type="button" data-testid="create-conversation-dialog">
 			New Conversation
 		</button>
@@ -70,7 +70,7 @@ describe("Home route (index.tsx)", () => {
 			).toBeInTheDocument();
 		});
 
-		it("renders CreateConversationDialog within SignedIn guard", async () => {
+		it("renders ConversationDialog within SignedIn guard", async () => {
 			const indexModule = await import("@/routes/index");
 			const HomeComponent = indexModule.Route.component;
 			if (!HomeComponent) throw new Error("component not defined");

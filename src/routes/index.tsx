@@ -3,7 +3,7 @@ import {
 	SignedIn,
 } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute } from "@tanstack/react-router";
-import { CreateConversationDialog } from "@/components/dialogs/ConversationDialog";
+import { ConversationDialog } from "@/components/dialogs/ConversationDialog";
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
@@ -20,7 +20,7 @@ function Home() {
 							create a new one to get started.
 						</p>
 						<div className="w-[15%] min-w-fit h-20 mx-auto">
-							<CreateConversationDialog />
+							<ConversationDialog />
 						</div>
 					</SignedIn>
 					<RedirectToSignIn />

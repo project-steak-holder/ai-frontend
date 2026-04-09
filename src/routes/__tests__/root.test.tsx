@@ -34,11 +34,36 @@ vi.mock("@/components/error-handling/RouteErrorBoundary", () => ({
 }));
 
 vi.mock("@/components/layout/SideBar", () => ({
-	SideBar: () => <div data-testid="sidebar">SideBar</div>,
+	SideBar: ({
+		open,
+		onOpenChange,
+	}: {
+		open?: boolean;
+		onOpenChange?: (open: boolean) => void;
+	}) => (
+		<div
+			data-testid="sidebar"
+			data-open={open ?? false}
+			data-has-on-open-change={!!onOpenChange}
+		>
+			SideBar
+		</div>
+	),
 }));
 
 vi.mock("@/components/layout/Header", () => ({
-	Header: () => <div data-testid="header">Header</div>,
+	Header: ({
+		onMenuClick,
+	}: {
+		onMenuClick?: () => void;
+	}) => (
+		<div
+			data-testid="header"
+			data-has-on-menu-click={!!onMenuClick}
+		>
+			Header
+		</div>
+	),
 }));
 
 vi.mock("@/components/ui/sonner", () => ({
@@ -148,7 +173,7 @@ describe("Root layout (__root.tsx)", () => {
 			expect(screen.getByTestId("root-error-boundary")).toBeInTheDocument();
 		});
 
-		it("renders SideBar", async () => {
+		it("renders SideBar component", async () => {
 			const rootModule = await import("@/routes/__root");
 			const ShellComponent = rootModule.Route.options.shellComponent;
 			if (!ShellComponent) throw new Error("shellComponent not defined");
@@ -161,7 +186,7 @@ describe("Root layout (__root.tsx)", () => {
 			expect(screen.getByTestId("sidebar")).toBeInTheDocument();
 		});
 
-		it("renders Header", async () => {
+		it("renders Header component", async () => {
 			const rootModule = await import("@/routes/__root");
 			const ShellComponent = rootModule.Route.options.shellComponent;
 			if (!ShellComponent) throw new Error("shellComponent not defined");
@@ -227,6 +252,71 @@ describe("Root layout (__root.tsx)", () => {
 			);
 			const html = document.querySelector("html");
 			expect(html?.getAttribute("lang")).toBe("en");
+		});
+
+		it("passes onOpenChange prop to SideBar for state coordination", async () => {
+			const rootModule = await import("@/routes/__root");
+			const ShellComponent = rootModule.Route.options.shellComponent;
+			if (!ShellComponent) throw new Error("shellComponent not defined");
+
+			render(
+				<ShellComponent>
+					<div>Content</div>
+				</ShellComponent>,
+			);
+
+			const sidebar = screen.getByTestId("sidebar");
+			expect(sidebar.getAttribute("data-has-on-open-change")).toBe("true");
+		});
+
+		it("passes onMenuClick prop to Header for state coordination", async () => {
+			const rootModule = await import("@/routes/__root");
+			const ShellComponent = rootModule.Route.options.shellComponent;
+			if (!ShellComponent) throw new Error("shellComponent not defined");
+
+			render(
+				<ShellComponent>
+					<div>Content</div>
+				</ShellComponent>,
+			);
+
+			const header = screen.getByTestId("header");
+			expect(header.getAttribute("data-has-on-menu-click")).toBe("true");
+		});
+
+		it("layout uses flexbox for proper responsive behavior", async () => {
+			const rootModule = await import("@/routes/__root");
+			const ShellComponent = rootModule.Route.options.shellComponent;
+			if (!ShellComponent) throw new Error("shellComponent not defined");
+
+			const { container } = render(
+				<ShellComponent>
+					<div>Content</div>
+				</ShellComponent>,
+			);
+
+			const rootFlex = container.querySelector(".flex.h-screen");
+			expect(rootFlex).toBeInTheDocument();
+
+			const contentArea = container.querySelector(".flex-1.flex.flex-col");
+			expect(contentArea).toBeInTheDocument();
+		});
+
+		it("renders main content area with flex-1 and overflow-auto", async () => {
+			const rootModule = await import("@/routes/__root");
+			const ShellComponent = rootModule.Route.options.shellComponent;
+			if (!ShellComponent) throw new Error("shellComponent not defined");
+
+			const { container } = render(
+				<ShellComponent>
+					<div>Test Content</div>
+				</ShellComponent>,
+			);
+
+			const mainElement = container.querySelector("main");
+			expect(mainElement).toBeInTheDocument();
+			expect(mainElement?.className).toContain("flex-1");
+			expect(mainElement?.className).toContain("overflow-auto");
 		});
 	});
 });

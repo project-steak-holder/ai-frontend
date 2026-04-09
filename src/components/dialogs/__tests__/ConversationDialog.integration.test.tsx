@@ -8,7 +8,7 @@ import {
 	waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateConversationDialog } from "../ConversationDialog";
+import { ConversationDialog } from "../ConversationDialog";
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -79,7 +79,7 @@ async function openDialog() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("CreateConversationDialog", () => {
+describe("ConversationDialog", () => {
 	beforeEach(() => {
 		mockCreateConversation.mockReset();
 		mockNavigate.mockReset();
@@ -90,7 +90,7 @@ describe("CreateConversationDialog", () => {
 	});
 
 	it("renders the 'New Conversation' trigger button", () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		expect(
 			screen.getByRole("button", { name: /new conversation/i }),
@@ -98,7 +98,7 @@ describe("CreateConversationDialog", () => {
 	});
 
 	it("opens dialog when button is clicked (dialog role + input placeholder visible)", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
@@ -108,7 +108,7 @@ describe("CreateConversationDialog", () => {
 	});
 
 	it("Create button is disabled when title input is empty", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
@@ -116,7 +116,7 @@ describe("CreateConversationDialog", () => {
 	});
 
 	it("Create button is enabled when title has content", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
@@ -134,7 +134,7 @@ describe("CreateConversationDialog", () => {
 			name: "My Conversation",
 		});
 
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
@@ -162,7 +162,7 @@ describe("CreateConversationDialog", () => {
 			name: "Success Conv",
 		});
 
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
@@ -183,7 +183,7 @@ describe("CreateConversationDialog", () => {
 	});
 
 	it("Cancel button closes dialog without calling createConversation", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
@@ -204,7 +204,7 @@ describe("CreateConversationDialog", () => {
 			name: "Enter Conv",
 		});
 
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
 		await openDialog();
 
