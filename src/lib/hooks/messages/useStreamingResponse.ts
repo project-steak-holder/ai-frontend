@@ -172,20 +172,26 @@ export const useStreamingResponse = (conversationId: string) => {
 			return;
 		}
 
-		if (query.isSuccess) {
-			const messagesKey = ["messages", userId, conversationId];
+		const messagesKey = ["messages", userId, conversationId];
 
-			queryClient.invalidateQueries({ queryKey: messagesKey }).then(() => {
-				setStreamRequest(null);
-			});
+		if (query.isSuccess) {
+			queryClient
+				.invalidateQueries({ queryKey: messagesKey })
+				.catch(() => {
+					// Silently ignore invalidation failures - still reset stream request
+				})
+				.finally(() => {
+					setStreamRequest(null);
+				});
+			return;
 		}
 
 		if (query.isError) {
-			const messagesKey = ["messages", userId, conversationId];
 			queryClient.removeQueries({ queryKey: messagesKey });
-			setStreamRequest(null);
 			toast.error("Error streaming response");
 		}
+
+		setStreamRequest(null);
 	}, [
 		isFetching,
 		query.isSuccess,

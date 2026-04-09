@@ -343,4 +343,42 @@ describe("useStreamingResponse", () => {
 
 		invalidateQueriesSpy.mockRestore();
 	});
+
+	it("resets isStreaming when invalidateQueries rejects after successful stream", async () => {
+		const { useStreamingResponse } = await import("../useStreamingResponse");
+		const { queryClient, wrapper } = createWrapper();
+
+		// Make invalidateQueries reject to simulate a failed messages refetch
+		const invalidateQueriesSpy = vi
+			.spyOn(queryClient, "invalidateQueries")
+			.mockRejectedValue(new Error("Refetch failed"));
+
+		mockStreamMessage.mockResolvedValue(
+			createReadableStream([
+				'data:{"content":"Response","partial":true}\n',
+				'data:{"complete":true}\n',
+			]),
+		);
+
+		const { result } = renderHook(() => useStreamingResponse("conv-1"), {
+			wrapper,
+		});
+
+		act(() => {
+			result.current.sendMessage("Test message");
+		});
+
+		expect(result.current.isStreaming).toBe(true);
+
+		// Even though invalidateQueries rejects, isStreaming must reset
+		await waitFor(() => {
+			expect(result.current.isStreaming).toBe(false);
+		});
+
+		expect(result.current.streamedText).toBe("");
+		// Verify no error toast is shown when stream succeeds but invalidateQueries fails
+		expect(mockToastError).not.toHaveBeenCalled();
+
+		invalidateQueriesSpy.mockRestore();
+	});
 });
