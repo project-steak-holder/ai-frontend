@@ -13,6 +13,16 @@ interface ChatLayoutProps {
 	user?: { name: string; image?: string | null };
 }
 
+function messageBubbleCn(isUser: boolean): string {
+	return cn(
+		"max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-anywhere overflow-hidden",
+		isUser ? "order-1" : "order-2",
+		isUser
+			? "bg-primary text-primary-foreground rounded-br-sm"
+			: "bg-muted text-foreground rounded-bl-sm",
+	);
+}
+
 function getInitials(name: string): string {
 	const parts = name.trim().split(/\s+/);
 	if (parts.length >= 2)
@@ -73,7 +83,7 @@ export function ChatLayout({
 	return (
 		<div ref={scrollAreaContainerRef} className="h-full min-h-0">
 			<ScrollArea className="h-full">
-				<div className="flex h-full flex-col justify-end gap-3 p-16">
+				<div className="flex h-full flex-col justify-end gap-2 px-3 py-4 sm:gap-3 sm:px-6 sm:py-6 md:p-16">
 					{messages?.map((message: Message) => {
 						const isUserMessage = message.type === "USER";
 
@@ -112,13 +122,7 @@ export function ChatLayout({
 								)}
 								<div
 									data-testid={isUserMessage ? "user-message" : "ai-message"}
-									className={cn(
-										"max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-anywhere overflow-hidden",
-										isUserMessage ? "order-1" : "order-2",
-										isUserMessage
-											? "bg-primary text-primary-foreground rounded-br-sm"
-											: "bg-muted text-foreground rounded-bl-sm",
-									)}
+									className={messageBubbleCn(isUserMessage)}
 								>
 									{message.content}
 								</div>
@@ -130,7 +134,7 @@ export function ChatLayout({
 							<UserRound className="h-4 w-4 shrink-0 text-muted-foreground order-1" />
 							<div
 								data-testid="ai-message-streaming"
-								className="max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-anywhere overflow-hidden order-2 bg-muted text-foreground rounded-bl-sm"
+								className={messageBubbleCn(false)}
 							>
 								{streamedText || <ThreeDotsMoveIcon />}
 							</div>
