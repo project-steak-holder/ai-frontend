@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 import { useMessagesByConversationId } from "@/lib/hooks/messages";
 import type { Message } from "@/lib/schema/Message";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ThreeDotsMoveIcon } from "../ui/3DotsMoveIcon";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ScrollArea } from "../ui/scroll-area";
 
 interface ChatLayoutProps {
@@ -15,11 +15,16 @@ interface ChatLayoutProps {
 
 function getInitials(name: string): string {
 	const parts = name.trim().split(/\s+/);
-	if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+	if (parts.length >= 2)
+		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 	return name.slice(0, 2).toUpperCase();
 }
 
-export function ChatLayout({ conversationId, streamedText, user }: ChatLayoutProps) {
+export function ChatLayout({
+	conversationId,
+	streamedText,
+	user,
+}: ChatLayoutProps) {
 	const scrollAreaContainerRef = useRef<HTMLDivElement | null>(null);
 	const {
 		data: messages,
@@ -82,9 +87,15 @@ export function ChatLayout({ conversationId, streamedText, user }: ChatLayoutPro
 							>
 								{isUserMessage ? (
 									<Avatar size="sm" className="order-2 shrink-0">
-										{user?.image && <AvatarImage src={user.image} alt={user.name} />}
+										{user?.image && (
+											<AvatarImage src={user.image} alt={user.name} />
+										)}
 										<AvatarFallback>
-											{user ? getInitials(user.name) : <UserRound className="h-3 w-3" />}
+											{user ? (
+												getInitials(user.name)
+											) : (
+												<UserRound className="h-3 w-3" />
+											)}
 										</AvatarFallback>
 									</Avatar>
 								) : (
