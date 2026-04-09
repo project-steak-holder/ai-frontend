@@ -86,7 +86,11 @@ export function ChatLayout({
 								)}
 							>
 								{isUserMessage ? (
-									<Avatar size="sm" className="order-2 shrink-0">
+									<Avatar
+										data-testid="user-avatar"
+										size="sm"
+										className="order-2 shrink-0"
+									>
 										{user?.image && (
 											<AvatarImage src={user.image} alt={user.name} />
 										)}
