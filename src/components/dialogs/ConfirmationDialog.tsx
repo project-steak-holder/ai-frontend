@@ -10,7 +10,7 @@ import { useDialogStore } from "@/stores/dialogStore";
 import { Button } from "../ui/button";
 
 export function ConfirmationDialog() {
-	const { isOpen, closeDialog, title, description, type, onConfirm } =
+	const { isOpen, closeDialog, title, description, type, name, onConfirm } =
 		useDialogStore();
 	const handleConfirm = async () => {
 		await onConfirm?.();
@@ -29,14 +29,14 @@ export function ConfirmationDialog() {
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>{description}</DialogDescription>
-					You are about to delete the conversation "{title}". This action cannot
+					You are about to delete the conversation "{name}". This action cannot
 					be undone.
 				</DialogHeader>
 				<DialogFooter>
-					<Button variant="outline" onClick={handleConfirm}>
-						Yes
+					<Button onClick={handleConfirm}>Yes</Button>
+					<Button variant="outline" onClick={handleCancel}>
+						No
 					</Button>
-					<Button onClick={handleCancel}>No</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

@@ -68,6 +68,7 @@ export function ConversationDialog() {
 						}
 					}}
 					placeholder="Requirements Elicitation"
+					aria-label="Conversation name"
 				/>
 				<DialogFooter>
 					<Button variant="outline" onClick={closeDialog}>
