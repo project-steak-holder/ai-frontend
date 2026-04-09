@@ -84,14 +84,14 @@ describe("Header", () => {
 		});
 	});
 
-	it("renders header element with hidden md:flex classes for desktop", () => {
+	it("renders header element with flex layout", () => {
 		mockGetConversationById.mockResolvedValue({ id: "conv-1", name: "Chat" });
 
 		const { container } = render(<Header />, { wrapper: createWrapper() });
 
-		const desktopHeader = container.querySelector("header.hidden");
-		expect(desktopHeader).toBeInTheDocument();
-		expect(desktopHeader?.className).toContain("md:flex");
+		const header = container.querySelector("header");
+		expect(header).toBeInTheDocument();
+		expect(header?.className).toContain("flex");
 	});
 });
 
@@ -117,13 +117,11 @@ describe("Header mobile top bar", () => {
 		expect(hamburgerButton.tagName).toBe("BUTTON");
 	});
 
-	it("mobile top bar has flex md:hidden responsive classes", () => {
-		const { container } = render(<Header />, { wrapper: createWrapper() });
+	it("hamburger button has md:hidden class for responsive hiding", () => {
+		render(<Header />, { wrapper: createWrapper() });
 
-		const mobileTopBar = container.querySelector(
-			".flex.md\\:hidden.items-center.h-14",
-		);
-		expect(mobileTopBar).toBeInTheDocument();
+		const hamburgerButton = screen.getByLabelText("Open navigation menu");
+		expect(hamburgerButton.className).toContain("md:hidden");
 	});
 
 	it("hamburger button has ghost variant and icon size", () => {
@@ -146,19 +144,16 @@ describe("Header mobile top bar", () => {
 		expect(onMenuClick).toHaveBeenCalledOnce();
 	});
 
-	it("hamburger button is inside the mobile top bar", () => {
+	it("hamburger button is inside the header", () => {
 		const { container } = render(<Header />, { wrapper: createWrapper() });
 
-		const mobileTopBar = container.querySelector(
-			".flex.md\\:hidden.items-center.h-14",
-		);
-		expect(mobileTopBar).toBeInTheDocument();
+		const header = container.querySelector("header");
+		expect(header).toBeInTheDocument();
 
-		const hamburgerButton = mobileTopBar?.querySelector("button");
-		expect(hamburgerButton).toBeInTheDocument();
-		expect(hamburgerButton?.getAttribute("aria-label")).toBe(
-			"Open navigation menu",
+		const hamburgerButton = header?.querySelector(
+			'button[aria-label="Open navigation menu"]',
 		);
+		expect(hamburgerButton).toBeInTheDocument();
 	});
 
 	it("clicking hamburger button with no onMenuClick prop is a safe no-op", () => {

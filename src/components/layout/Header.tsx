@@ -10,7 +10,9 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
 	const { conversationId } = useParams({ strict: false });
-	const { conversation, error } = useConversation(conversationId as string);
+	const { conversation, error } = useConversation(
+		conversationId ?? undefined,
+	);
 	return (
 		<>
 			{/* Mobile top bar */}
