@@ -4,6 +4,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
 import type { Message } from "@/lib/schema/Message";
 import { streamMessage } from "@/server/api/messages/streamMessage";
@@ -32,7 +33,15 @@ export const parseSSEEvent = (dataLine: string): SSEEvent | null => {
 	}
 
 	try {
-		return JSON.parse(trimmed) as SSEEvent;
+		const parsed = JSON.parse(trimmed);
+		if (
+			typeof parsed === "object" &&
+			parsed !== null &&
+			("partial" in parsed || "complete" in parsed || "error" in parsed)
+		) {
+			return parsed as SSEEvent;
+		}
+		return null;
 	} catch {
 		return null;
 	}
@@ -173,6 +182,7 @@ export const useStreamingResponse = (conversationId: string) => {
 
 		if (query.isError) {
 			setStreamRequest(null);
+			toast.error("Error streaming response");
 		}
 	}, [
 		isFetching,
