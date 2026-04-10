@@ -25,12 +25,9 @@ vi.mock("@tanstack/react-router", () => ({
 	}),
 }));
 
-vi.mock("@/components/dialogs/ConversationDialog", () => ({
-	ConversationDialog: () => (
-		<button type="button" data-testid="create-conversation-dialog">
-			New Conversation
-		</button>
-	),
+vi.mock("@/stores/dialogStore", () => ({
+	useDialogStore: (selector: (state: Record<string, unknown>) => unknown) =>
+		selector({ openDialog: vi.fn() }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -70,7 +67,7 @@ describe("Home route (index.tsx)", () => {
 			).toBeInTheDocument();
 		});
 
-		it("renders ConversationDialog within SignedIn guard", async () => {
+		it("renders New Conversation button within SignedIn guard", async () => {
 			const indexModule = await import("@/routes/index");
 			const HomeComponent = indexModule.Route.component;
 			if (!HomeComponent) throw new Error("component not defined");
@@ -78,8 +75,8 @@ describe("Home route (index.tsx)", () => {
 			render(<HomeComponent />);
 
 			const signedInBlock = screen.getByTestId("signed-in");
-			const dialog = screen.getByTestId("create-conversation-dialog");
-			expect(signedInBlock).toContainElement(dialog);
+			const button = screen.getByRole("button", { name: /new conversation/i });
+			expect(signedInBlock).toContainElement(button);
 		});
 
 		it("uses SignedIn component for auth gating", async () => {

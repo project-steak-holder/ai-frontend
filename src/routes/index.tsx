@@ -3,10 +3,13 @@ import {
 	SignedIn,
 } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute } from "@tanstack/react-router";
-import { ConversationDialog } from "@/components/dialogs/ConversationDialog";
+import { Button } from "@/components/ui/button";
+import { useDialogStore } from "@/stores/dialogStore";
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
+	const openDialog = useDialogStore((state) => state.openDialog);
+
 	return (
 		<div className="bg-background text-foreground">
 			<section className="relative py-20 px-6 text-center">
@@ -20,7 +23,9 @@ function Home() {
 							create a new one to get started.
 						</p>
 						<div className="w-[15%] min-w-fit h-20 mx-auto">
-							<ConversationDialog />
+							<Button onClick={() => openDialog({ type: "conversation" })}>
+								New Conversation
+							</Button>
 						</div>
 					</SignedIn>
 					<RedirectToSignIn />
