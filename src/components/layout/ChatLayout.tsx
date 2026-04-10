@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useMessagesByConversationId } from "@/lib/hooks/messages";
 import type { Message } from "@/lib/schema/Message";
 import { cn } from "@/lib/utils";
-import ThreeDotsMoveIcon from "../ui/3DotsMoveIcon";
+import { ThreeDotsMoveIcon } from "../ui/3DotsMoveIcon";
 import { ScrollArea } from "../ui/scroll-area";
 
 interface ChatLayoutProps {
@@ -12,10 +12,7 @@ interface ChatLayoutProps {
 	streamedText?: string;
 }
 
-export default function ChatLayout({
-	conversationId,
-	streamedText,
-}: ChatLayoutProps) {
+export function ChatLayout({ conversationId, streamedText }: ChatLayoutProps) {
 	const scrollAreaContainerRef = useRef<HTMLDivElement | null>(null);
 	const {
 		data: messages,

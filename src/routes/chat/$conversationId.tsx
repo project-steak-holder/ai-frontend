@@ -2,7 +2,7 @@ import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { SubmitEventHandler } from "react";
 import { z } from "zod";
-import ChatLayout from "@/components/layout/ChatLayout";
+import { ChatLayout } from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
 import { useStreamingResponse } from "@/lib/hooks/messages";
 

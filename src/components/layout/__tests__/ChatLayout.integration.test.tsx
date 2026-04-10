@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import ChatLayout from "../ChatLayout";
+import { ChatLayout } from "../ChatLayout";
 
 // ---------------------------------------------------------------------------
 // Module mocks

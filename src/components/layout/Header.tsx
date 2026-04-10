@@ -2,7 +2,7 @@ import { UserButton } from "@neondatabase/auth/react";
 import { useParams } from "@tanstack/react-router";
 import { useConversation } from "@/lib/hooks/conversations/useConversation";
 
-export default function Header() {
+export function Header() {
 	const { conversationId } = useParams({ strict: false });
 	const { conversation, error } = useConversation(conversationId as string);
 

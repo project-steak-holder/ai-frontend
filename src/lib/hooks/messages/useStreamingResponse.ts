@@ -8,23 +8,23 @@ import { authClient } from "@/integrations/neon-auth/client";
 import type { Message } from "@/lib/schema/Message";
 import { streamMessage } from "@/server/api/messages/streamMessage";
 
-interface SSEPartial {
+export interface SSEPartial {
 	content: string;
 	partial: true;
 }
 
-interface SSEComplete {
+export interface SSEComplete {
 	complete: true;
 }
 
-interface SSEError {
+export interface SSEError {
 	error: string;
 	details?: Record<string, unknown>;
 }
 
-type SSEEvent = SSEPartial | SSEComplete | SSEError;
+export type SSEEvent = SSEPartial | SSEComplete | SSEError;
 
-const parseSSEEvent = (dataLine: string): SSEEvent | null => {
+export const parseSSEEvent = (dataLine: string): SSEEvent | null => {
 	const trimmed = dataLine.trim();
 
 	if (!trimmed) {
@@ -38,7 +38,7 @@ const parseSSEEvent = (dataLine: string): SSEEvent | null => {
 	}
 };
 
-async function* parseSSEStream(
+export async function* parseSSEStream(
 	stream: ReadableStream<Uint8Array>,
 ): AsyncGenerator<string> {
 	const reader = stream.getReader();
