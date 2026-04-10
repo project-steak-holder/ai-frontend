@@ -4,6 +4,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
 import type { Message } from "@/lib/schema/Message";
 import { streamMessage } from "@/server/api/messages/streamMessage";
@@ -32,7 +33,15 @@ export const parseSSEEvent = (dataLine: string): SSEEvent | null => {
 	}
 
 	try {
-		return JSON.parse(trimmed) as SSEEvent;
+		const parsed = JSON.parse(trimmed);
+		if (
+			typeof parsed === "object" &&
+			parsed !== null &&
+			("partial" in parsed || "complete" in parsed || "error" in parsed)
+		) {
+			return parsed as SSEEvent;
+		}
+		return null;
 	} catch {
 		return null;
 	}
@@ -163,17 +172,26 @@ export const useStreamingResponse = (conversationId: string) => {
 			return;
 		}
 
-		if (query.isSuccess) {
-			const messagesKey = ["messages", userId, conversationId];
+		const messagesKey = ["messages", userId, conversationId];
 
-			queryClient.invalidateQueries({ queryKey: messagesKey }).then(() => {
-				setStreamRequest(null);
-			});
+		if (query.isSuccess) {
+			queryClient
+				.invalidateQueries({ queryKey: messagesKey })
+				.catch(() => {
+					// Silently ignore invalidation failures - still reset stream request
+				})
+				.finally(() => {
+					setStreamRequest(null);
+				});
+			return;
 		}
 
 		if (query.isError) {
-			setStreamRequest(null);
+			queryClient.invalidateQueries({ queryKey: messagesKey });
+			toast.error("Error streaming response");
 		}
+
+		setStreamRequest(null);
 	}, [
 		isFetching,
 		query.isSuccess,
@@ -220,7 +238,7 @@ export const useStreamingResponse = (conversationId: string) => {
 	const isActive = !!streamRequest;
 
 	return {
-		streamMessage: sendMessage,
+		sendMessage,
 		streamedText: isActive ? (query.data ?? "") : "",
 		isStreaming: isActive,
 		streamError: query.error?.message ?? null,

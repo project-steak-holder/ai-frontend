@@ -84,6 +84,13 @@ describe("parseSSEEvent", () => {
 		const result = parseSSEEvent('  {"complete":true}  ');
 		expect(result).toEqual({ complete: true });
 	});
+
+	it("returns null for valid JSON without a discriminating key", () => {
+		expect(parseSSEEvent('{"foo":"bar"}')).toBeNull();
+		expect(parseSSEEvent("42")).toBeNull();
+		expect(parseSSEEvent('"just a string"')).toBeNull();
+		expect(parseSSEEvent("[]")).toBeNull();
+	});
 });
 
 // ---------------------------------------------------------------------------

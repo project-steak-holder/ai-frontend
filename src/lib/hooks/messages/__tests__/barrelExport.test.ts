@@ -13,7 +13,6 @@ vi.mock("@/integrations/neon-auth/client", () => ({
 
 vi.mock("@/server/api/messages", () => ({
 	getMessagesByConversationId: vi.fn(),
-	sendMessage: vi.fn(),
 }));
 
 vi.mock("@/server/api/messages/streamMessage", () => ({

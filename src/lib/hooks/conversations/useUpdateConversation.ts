@@ -1,5 +1,6 @@
 import { updateConversation } from "@server/api/conversations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
 import { guard } from "@/lib/utils";
 
@@ -37,6 +38,10 @@ export function useUpdateConversation() {
 			await queryClient.invalidateQueries({
 				queryKey: ["conversation", id, userId],
 			});
+			toast.success("Conversation updated");
+		},
+		onError: () => {
+			toast.error("Error updating conversation");
 		},
 	});
 }

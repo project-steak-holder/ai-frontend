@@ -196,4 +196,85 @@ describe("ChatLayout", () => {
 			expect(screen.getByText("Hello human")).toBeInTheDocument();
 		});
 	});
+
+	it("applies responsive max-width classes to user message bubbles", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("user-message");
+			expect(bubble.className).toContain("max-w-[85%]");
+			expect(bubble.className).toContain("sm:max-w-[70%]");
+			expect(bubble.className).toContain("md:max-w-[60%]");
+			expect(bubble.className).toContain("lg:max-w-[52%]");
+		});
+	});
+
+	it("applies user-specific styles to user message bubbles", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("user-message");
+			expect(bubble.className).toContain("bg-primary");
+			expect(bubble.className).toContain("text-primary-foreground");
+			expect(bubble.className).toContain("rounded-br-sm");
+			expect(bubble.className).toContain("order-1");
+		});
+	});
+
+	it("applies AI-specific styles to AI message bubbles", async () => {
+		mockGet.mockResolvedValue([aiMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("ai-message");
+			expect(bubble.className).toContain("bg-muted");
+			expect(bubble.className).toContain("text-foreground");
+			expect(bubble.className).toContain("rounded-bl-sm");
+			expect(bubble.className).toContain("order-2");
+		});
+	});
+
+	it("applies AI-specific styles to streaming message bubble", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" streamedText="Streaming..." />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("ai-message-streaming");
+			expect(bubble.className).toContain("bg-muted");
+			expect(bubble.className).toContain("text-foreground");
+			expect(bubble.className).toContain("rounded-bl-sm");
+			expect(bubble.className).toContain("order-2");
+		});
+	});
+
+	it("applies responsive padding to message container", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const messageContainer = screen.getByTestId("message-container");
+			expect(messageContainer).toBeInTheDocument();
+			expect(messageContainer.className).toContain("px-3");
+			expect(messageContainer.className).toContain("py-4");
+			expect(messageContainer.className).toContain("sm:px-6");
+			expect(messageContainer.className).toContain("md:p-16");
+		});
+	});
 });
