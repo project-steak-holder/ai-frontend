@@ -52,15 +52,8 @@ vi.mock("@/components/layout/SideBar", () => ({
 }));
 
 vi.mock("@/components/layout/Header", () => ({
-	Header: ({
-		onMenuClick,
-	}: {
-		onMenuClick?: () => void;
-	}) => (
-		<div
-			data-testid="header"
-			data-has-on-menu-click={!!onMenuClick}
-		>
+	Header: ({ onMenuClick }: { onMenuClick?: () => void }) => (
+		<div data-testid="header" data-has-on-menu-click={!!onMenuClick}>
 			Header
 		</div>
 	),

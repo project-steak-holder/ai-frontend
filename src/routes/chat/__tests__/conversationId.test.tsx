@@ -5,11 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Module mocks
 // ---------------------------------------------------------------------------
 
-const mockStreamMessage = vi.fn();
+const mockSendMessage = vi.fn();
 const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
 const mockUseStreamingResponse = vi.fn().mockReturnValue({
-	sendMessage: mockStreamMessage,
+	sendMessage: mockSendMessage,
 	streamedText: "",
 	isStreaming: false,
 });
@@ -66,7 +66,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockUseStreamingResponse.mockReturnValue({
-			sendMessage: mockStreamMessage,
+			sendMessage: mockSendMessage,
 			streamedText: "",
 			isStreaming: false,
 		});
@@ -165,7 +165,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 			);
 		});
 
-		it("calls streamMessage on form submit with non-empty input", async () => {
+		it("calls sendMessage on form submit with non-empty input", async () => {
 			const chatModule = await import("@/routes/chat/$conversationId");
 			const ChatComponent = chatModule.Route.component;
 			if (!ChatComponent) throw new Error("component not defined");
@@ -181,7 +181,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 			expect(form).toBeTruthy();
 			fireEvent.submit(form);
 
-			expect(mockStreamMessage).toHaveBeenCalledWith("Hello AI");
+			expect(mockSendMessage).toHaveBeenCalledWith("Hello AI");
 		});
 
 		it("clears input after successful form submit", async () => {
@@ -212,7 +212,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 			) as HTMLInputElement;
 			fireEvent.submit(input.closest("form") as HTMLFormElement);
 
-			expect(mockStreamMessage).not.toHaveBeenCalled();
+			expect(mockSendMessage).not.toHaveBeenCalled();
 		});
 
 		it("does not call streamMessage when input is only whitespace", async () => {
@@ -228,14 +228,14 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 			fireEvent.change(input, { target: { value: "   " } });
 			fireEvent.submit(input.closest("form") as HTMLFormElement);
 
-			expect(mockStreamMessage).not.toHaveBeenCalled();
+			expect(mockSendMessage).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("streaming state", () => {
 		it("disables input when streaming", async () => {
 			mockUseStreamingResponse.mockReturnValue({
-				sendMessage: mockStreamMessage,
+				sendMessage: mockSendMessage,
 				streamedText: "Streaming...",
 				isStreaming: true,
 			});
@@ -252,7 +252,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 
 		it("passes streamedText to ChatLayout when streaming", async () => {
 			mockUseStreamingResponse.mockReturnValue({
-				sendMessage: mockStreamMessage,
+				sendMessage: mockSendMessage,
 				streamedText: "Partial response...",
 				isStreaming: true,
 			});
@@ -270,7 +270,7 @@ describe("Chat route (chat/$conversationId.tsx)", () => {
 
 		it("does not pass streamedText to ChatLayout when not streaming", async () => {
 			mockUseStreamingResponse.mockReturnValue({
-				sendMessage: mockStreamMessage,
+				sendMessage: mockSendMessage,
 				streamedText: "leftover text",
 				isStreaming: false,
 			});

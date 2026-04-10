@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { authClient } from "@integrations/neon-auth/client";
 import { NeonAuthUIProvider } from "@neondatabase/neon-js/auth/react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -7,6 +6,7 @@ import {
 	HeadContent,
 	Scripts,
 } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { RootErrorBoundary } from "@/components/error-handling/RootErrorBoundary";
 import { RouteErrorBoundary } from "@/components/error-handling/RouteErrorBoundary";
@@ -76,19 +76,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					>
 						<TooltipProvider>
 							<div className="flex h-screen">
-								<SideBar
-									open={sidebarOpen}
-									onOpenChange={setSidebarOpen}
-								/>
+								<SideBar open={sidebarOpen} onOpenChange={setSidebarOpen} />
 
 								<div className="flex-1 flex flex-col min-w-0">
-									<Header
-										onMenuClick={() => setSidebarOpen(true)}
-									/>
+									<Header onMenuClick={() => setSidebarOpen(true)} />
 
-									<main className="flex-1 overflow-auto">
-										{children}
-									</main>
+									<main className="flex-1 overflow-auto">{children}</main>
 									<Toaster />
 								</div>
 							</div>
