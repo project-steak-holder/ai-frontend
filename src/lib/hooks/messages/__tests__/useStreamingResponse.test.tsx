@@ -194,7 +194,7 @@ describe("useStreamingResponse", () => {
 
 	it("increments request id on each sendMessage call", async () => {
 		const { useStreamingResponse } = await import("../useStreamingResponse");
-		const { wrapper } = createWrapper();
+		const { wrapper, queryClient } = createWrapper();
 
 		mockStreamMessage.mockResolvedValue(
 			createReadableStream(['data:{"content":"resp","partial":true}\n']),
@@ -204,11 +204,26 @@ describe("useStreamingResponse", () => {
 			wrapper,
 		});
 
+		// First call sets isStreaming
 		act(() => {
 			result.current.sendMessage("First");
 		});
-
 		expect(result.current.isStreaming).toBe(true);
+
+		// Verify two optimistic messages are added to cache with distinct calls
+		act(() => {
+			result.current.sendMessage("Second");
+		});
+		expect(result.current.isStreaming).toBe(true);
+
+		const cached = queryClient.getQueryData<Message[]>([
+			"messages",
+			"user-1",
+			"conv-1",
+		]);
+		expect(cached).toHaveLength(2);
+		expect(cached?.[0].content).toBe("First");
+		expect(cached?.[1].content).toBe("Second");
 	});
 
 	it("shows toast error when streaming query fails", async () => {
@@ -231,10 +246,10 @@ describe("useStreamingResponse", () => {
 
 		expect(mockToastError).toHaveBeenCalledWith("Error streaming response");
 
-		// Verify optimistic message was rolled back from cache
+		// Cache is preserved (invalidateQueries triggers refetch, not removal)
 		const messagesKey = ["messages", "user-1", "conv-1"];
 		const cachedMessages = queryClient.getQueryData<Message[]>(messagesKey);
-		expect(cachedMessages).toBeUndefined();
+		expect(cachedMessages).toBeDefined();
 	});
 
 	it("resets isStreaming to false after stream error", async () => {
@@ -257,15 +272,15 @@ describe("useStreamingResponse", () => {
 			expect(result.current.isStreaming).toBe(false);
 		});
 
-		// Verify optimistic message was rolled back from cache
+		// Cache is preserved (invalidateQueries triggers refetch, not removal)
 		const messagesKey = ["messages", "user-1", "conv-1"];
 		const cachedMessages = queryClient.getQueryData<Message[]>(messagesKey);
-		expect(cachedMessages).toBeUndefined();
+		expect(cachedMessages).toBeDefined();
 	});
 
 	it("resets isStreaming and clears streamedText after successful stream completion", async () => {
 		const { useStreamingResponse } = await import("../useStreamingResponse");
-		const { queryClient, wrapper } = createWrapper();
+		const { wrapper } = createWrapper();
 
 		// Mock successful stream with content and completion event
 		mockStreamMessage.mockResolvedValue(

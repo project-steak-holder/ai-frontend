@@ -187,7 +187,7 @@ export const useStreamingResponse = (conversationId: string) => {
 		}
 
 		if (query.isError) {
-			queryClient.removeQueries({ queryKey: messagesKey });
+			queryClient.invalidateQueries({ queryKey: messagesKey });
 			toast.error("Error streaming response");
 		}
 
