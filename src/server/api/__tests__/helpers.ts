@@ -79,8 +79,14 @@ export function createDbChainMock(): ChainMock {
 
 	function getTerminalValue(): Promise<unknown> {
 		if (sequence) {
-			const value =
-				sequenceIndex < sequence.length ? sequence[sequenceIndex] : undefined;
+			if (sequenceIndex >= sequence.length) {
+				return Promise.reject(
+					new Error(
+						`getTerminalValue: scripted DB sequence exhausted at index ${sequenceIndex} (length ${sequence.length}). Unexpected extra DB call.`,
+					),
+				);
+			}
+			const value = sequence[sequenceIndex];
 			sequenceIndex++;
 			return Promise.resolve(value);
 		}

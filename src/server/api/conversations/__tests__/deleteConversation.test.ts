@@ -14,7 +14,6 @@ import {
 
 let dbMock: ChainMock;
 let andCallCount = 0;
-let eqCallCount = 0;
 
 vi.mock("@tanstack/react-start", () => ({
 	createServerFn: mockCreateServerFn(),
@@ -41,7 +40,6 @@ vi.mock("drizzle-orm", async () => {
 			return (actual as Record<string, unknown>).and(...args);
 		}),
 		eq: vi.fn((field: unknown, value: unknown) => {
-			eqCallCount++;
 			// Return the actual eq() result
 			return (actual as Record<string, unknown>).eq(field, value);
 		}),
@@ -58,7 +56,6 @@ describe("deleteConversation", () => {
 	beforeEach(() => {
 		dbMock = createDbChainMock();
 		andCallCount = 0;
-		eqCallCount = 0;
 		vi.clearAllMocks();
 	});
 
@@ -138,6 +135,8 @@ describe("deleteConversation", () => {
 	});
 
 	it("enforces user ownership by using both id and userId in where clause", async () => {
+		const { eq } = await import("drizzle-orm");
+
 		const deleted = {
 			id: VALID_CONVERSATION_ID,
 			userId: VALID_USER_ID,
@@ -150,10 +149,13 @@ describe("deleteConversation", () => {
 			userId: VALID_USER_ID,
 		});
 
-		// Verify that the where clause was constructed with both id and userId conditions
-		// This means both eq() and and() functions should have been called
+		// Verify the where clause uses both id and userId predicates
 		expect(dbMock.where).toHaveBeenCalled();
-		expect(eqCallCount).toBe(2); // One for id, one for userId
-		expect(andCallCount).toBe(1); // One for combining the conditions
+		expect(andCallCount).toBe(1);
+
+		// Verify the actual column/value pairs passed to eq()
+		const eqMock = vi.mocked(eq);
+		expect(eqMock).toHaveBeenCalledWith("id", VALID_CONVERSATION_ID);
+		expect(eqMock).toHaveBeenCalledWith("user_id", VALID_USER_ID);
 	});
 });
