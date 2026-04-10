@@ -73,17 +73,17 @@ test.describe("responsive behavior", () => {
 		await page.setViewportSize({ width: 375, height: 667 });
 		const mobileBounds = await userMessage.boundingBox();
 		const mobileParentBounds = await userMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
-		if (mobileBounds && mobileParentBounds) {
-			expect(mobileBounds.width).toBeLessThanOrEqual(mobileParentBounds.width * 0.9);
-		}
+		expect(mobileBounds, "user message bounding box should not be null at mobile width").not.toBeNull();
+		expect(mobileParentBounds, "parent bounding box should not be null at mobile width").not.toBeNull();
+		expect(mobileBounds!.width).toBeLessThanOrEqual(mobileParentBounds!.width * 0.9);
 
 		// At desktop width, bubble should be narrower relative to parent
 		await page.setViewportSize({ width: 1280, height: 720 });
 		const desktopBounds = await userMessage.boundingBox();
 		const desktopParentBounds = await userMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
-		if (desktopBounds && desktopParentBounds) {
-			expect(desktopBounds.width).toBeLessThanOrEqual(desktopParentBounds.width * 0.65);
-		}
+		expect(desktopBounds, "user message bounding box should not be null at desktop width").not.toBeNull();
+		expect(desktopParentBounds, "parent bounding box should not be null at desktop width").not.toBeNull();
+		expect(desktopBounds!.width).toBeLessThanOrEqual(desktopParentBounds!.width * 0.65);
 	});
 
 	test("chat message bubble handles overflow correctly", async ({ page }) => {
