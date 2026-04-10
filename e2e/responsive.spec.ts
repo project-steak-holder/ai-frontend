@@ -30,15 +30,15 @@ test.describe("responsive behavior", () => {
 		const conversationNameSpan = page.locator(`span:has-text("${longName}")`).first();
 
 		// Verify truncation styles are computed
-		const overflow = await conversationNameSpan.evaluate(
-			(el) => getComputedStyle(el).overflow,
-		);
-		expect(overflow).toBe("hidden");
-
 		const textOverflow = await conversationNameSpan.evaluate(
 			(el) => getComputedStyle(el).textOverflow,
 		);
 		expect(textOverflow).toBe("ellipsis");
+
+		const whiteSpace = await conversationNameSpan.evaluate(
+			(el) => getComputedStyle(el).whiteSpace,
+		);
+		expect(whiteSpace).toBe("nowrap");
 	});
 
 	test("new conversation button has truncate behavior", async ({ page }) => {
