@@ -196,8 +196,10 @@ describe("useStreamingResponse", () => {
 		const { useStreamingResponse } = await import("../useStreamingResponse");
 		const { wrapper, queryClient } = createWrapper();
 
-		mockStreamMessage.mockResolvedValue(
-			createReadableStream(['data:{"content":"resp","partial":true}\n']),
+		mockStreamMessage.mockImplementation(() =>
+			Promise.resolve(
+				createReadableStream(['data:{"content":"resp","partial":true}\n']),
+			),
 		);
 
 		const { result } = renderHook(() => useStreamingResponse("conv-1"), {

@@ -60,7 +60,7 @@ export interface ChainMock {
 	/**
 	 * Feed values in order per `.then()` call.
 	 * First `await` resolves with `values[0]`, second with `values[1]`, etc.
-	 * After exhaustion, subsequent calls resolve with `undefined`.
+	 * After exhaustion, subsequent calls reject with an error (fail-fast).
 	 */
 	resolveWithSequence: (values: unknown[]) => void;
 }
