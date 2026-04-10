@@ -93,7 +93,7 @@ src/
 │   └── messages/
 │
 ├── stores/                      # Zustand state stores
-|
+│
 ├── integrations/
 │   ├── neon-auth/client.ts      # Neon Auth (Better Auth) client
 │   └── tanstack-query/          # TanStack Query provider setup
