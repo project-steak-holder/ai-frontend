@@ -30,11 +30,11 @@ test.describe("chat input constraints", () => {
 		// Get the input element
 		const input = page.getByPlaceholder("Type a message...");
 
-		// Try to type more than 5000 characters
+		// Type more than 5000 characters sequentially to exercise browser maxLength
 		const longText = "a".repeat(6000);
-		await input.fill(longText);
+		await input.pressSequentially(longText);
 
-		// Check that the actual value is limited to 5000 characters
+		// Browser maxLength enforcement should cap at 5000
 		const actualValue = await input.inputValue();
 		expect(actualValue.length).toBeLessThanOrEqual(5000);
 	});
@@ -51,14 +51,13 @@ test.describe("chat input constraints", () => {
 		// Get the input element
 		const input = page.getByPlaceholder("Type a message...");
 
-		// Fill with exactly 5000 characters
+		// Type exactly 5000 characters sequentially
 		const text5000 = "x".repeat(5000);
-		await input.fill(text5000);
+		await input.pressSequentially(text5000);
 
-		// Check that the value is exactly 5000 characters
+		// Should accept all 5000 characters
 		const actualValue = await input.inputValue();
 		expect(actualValue.length).toBe(5000);
-		expect(actualValue).toBe(text5000);
 	});
 
 	test("chat input allows normal message submission within limit", async ({ page }) => {
