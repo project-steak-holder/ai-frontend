@@ -2,7 +2,7 @@ name: Tests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 jobs:
   test:
@@ -31,11 +31,11 @@ jobs:
         run: npm test
 
       - name: Install Playwright browsers
-        if: github.head_ref == 'staging'
+        if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        if: github.head_ref == 'staging'
+        if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npm run test:e2e
         env:
           BASE_URL: ${{ vars.STAGING_URL }}
@@ -44,7 +44,7 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
 
       - name: Upload Playwright report
-        if: always() && github.head_ref == 'staging'
+        if: always() && github.base_ref == 'staging' || github.base_ref == 'main'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
