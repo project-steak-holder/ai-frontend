@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SideBar } from "../SideBar";
 
@@ -16,17 +22,27 @@ vi.mock("@/integrations/neon-auth/client", () => ({
 vi.mock("@tanstack/react-router", () => ({
 	Link: ({
 		to,
+		params,
 		children,
 		onClick,
 	}: {
 		to: string;
+		params?: Record<string, string>;
 		children: React.ReactNode;
 		onClick?: () => void;
-	}) => (
-		<a href={to} onClick={onClick}>
-			{children}
-		</a>
-	),
+	}) => {
+		let href = to;
+		if (params) {
+			for (const [key, value] of Object.entries(params)) {
+				href = href.replace(`$${key}`, value);
+			}
+		}
+		return (
+			<a href={href} onClick={onClick}>
+				{children}
+			</a>
+		);
+	},
 	useParams: vi.fn().mockReturnValue({}),
 	useNavigate: () => vi.fn(),
 }));
@@ -61,7 +77,7 @@ vi.mock("@/components/ui/sheet", () => ({
 		onOpenChange?: (open: boolean) => void;
 	}) => (
 		<div data-testid="sheet" data-open={open ?? false}>
-			{children}
+			{(open ?? false) ? children : null}
 		</div>
 	),
 	SheetContent: ({
@@ -177,8 +193,12 @@ describe("SideBar", () => {
 		render(<SideBar />, { wrapper: createWrapper() });
 
 		await waitFor(() => {
-			expect(screen.getAllByText("First Chat").length).toBeGreaterThanOrEqual(1);
-			expect(screen.getAllByText("Second Chat").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("First Chat").length).toBeGreaterThanOrEqual(
+				1,
+			);
+			expect(screen.getAllByText("Second Chat").length).toBeGreaterThanOrEqual(
+				1,
+			);
 		});
 	});
 
@@ -188,7 +208,9 @@ describe("SideBar", () => {
 		render(<SideBar />, { wrapper: createWrapper() });
 
 		await waitFor(() => {
-			expect(screen.getAllByText("First Chat").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("First Chat").length).toBeGreaterThanOrEqual(
+				1,
+			);
 		});
 
 		// Links appear in both desktop and mobile views
@@ -219,22 +241,34 @@ describe("SideBar", () => {
 		render(<SideBar />, { wrapper: createWrapper() });
 
 		await waitFor(() => {
-			const buttons = screen.getAllByRole("button", { name: /new conversation/i });
+			const buttons = screen.getAllByRole("button", {
+				name: /new conversation/i,
+			});
 			expect(buttons.length).toBeGreaterThanOrEqual(1);
 		});
 	});
 
-	it("renders the ConversationDialog component for dialog management", async () => {
+	it("opens ConversationDialog when New Conversation button is clicked", async () => {
 		mockGetConversations.mockResolvedValue([]);
 
 		render(<SideBar />, { wrapper: createWrapper() });
 
-		// The New Conversation button should still be present (triggers dialog store)
 		await waitFor(() => {
 			const buttons = screen.getAllByRole("button", {
 				name: /new conversation/i,
 			});
 			expect(buttons.length).toBeGreaterThanOrEqual(1);
+		});
+
+		// Click the New Conversation button to trigger the dialog store
+		const button = screen.getAllByRole("button", {
+			name: /new conversation/i,
+		})[0];
+		fireEvent.click(button);
+
+		// ConversationDialog should appear
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
 		});
 	});
 
@@ -247,13 +281,14 @@ describe("SideBar", () => {
 		});
 
 		await waitFor(() => {
-			// There are two instances of "First Chat" (desktop + mobile)
-			expect(screen.getAllByText("First Chat").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("First Chat").length).toBeGreaterThanOrEqual(
+				1,
+			);
 		});
 
 		// Click the first "First Chat" link in the mobile sheet
 		const sheetContent = screen.getByTestId("sheet-content");
-		const mobileLink = sheetContent.querySelector('a[href="/chat/$conversationId"]');
+		const mobileLink = sheetContent.querySelector('a[href="/chat/conv-1"]');
 		expect(mobileLink).toBeInTheDocument();
 		if (mobileLink) fireEvent.click(mobileLink);
 		expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -297,14 +332,18 @@ describe("SideBar mobile drawer", () => {
 	});
 
 	it("Sheet has left side positioning", () => {
-		render(<SideBar />, { wrapper: createWrapper() });
+		render(<SideBar open={true} onOpenChange={vi.fn()} />, {
+			wrapper: createWrapper(),
+		});
 
 		const sheetContent = screen.getByTestId("sheet-content");
 		expect(sheetContent.getAttribute("data-side")).toBe("left");
 	});
 
 	it("Sheet includes accessibility title and description", () => {
-		render(<SideBar />, { wrapper: createWrapper() });
+		render(<SideBar open={true} onOpenChange={vi.fn()} />, {
+			wrapper: createWrapper(),
+		});
 
 		const sheetTitle = screen.getByTestId("sheet-title");
 		const sheetDescription = screen.getByTestId("sheet-description");
@@ -326,7 +365,9 @@ describe("SideBar mobile drawer", () => {
 	});
 
 	it("renders sidebar content in both desktop and mobile wrappers", () => {
-		render(<SideBar />, { wrapper: createWrapper() });
+		render(<SideBar open={true} onOpenChange={vi.fn()} />, {
+			wrapper: createWrapper(),
+		});
 
 		// Both desktop and mobile should have the title
 		const titles = screen.getAllByText("Stakeholder AI Chat");
@@ -374,15 +415,11 @@ describe("SideBar loading state", () => {
 		const { container } = render(<SideBar />, { wrapper: createWrapper() });
 
 		// The component should render but not show conversation links
-		const sidebarContent = container.querySelector(
-			".flex.flex-col.bg-sidebar",
-		);
+		const sidebarContent = container.querySelector(".flex.flex-col.bg-sidebar");
 		expect(sidebarContent).toBeInTheDocument();
 
 		// "No conversations yet" should not appear while loading
-		expect(
-			screen.queryByText(/no conversations yet/i),
-		).not.toBeInTheDocument();
+		expect(screen.queryByText(/no conversations yet/i)).not.toBeInTheDocument();
 
 		// Conversation links should not render while loading
 		expect(screen.queryByText("First Chat")).not.toBeInTheDocument();

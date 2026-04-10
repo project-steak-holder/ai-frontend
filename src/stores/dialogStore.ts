@@ -5,6 +5,7 @@ interface OpenDialogOptions {
 	name?: string;
 	title?: string;
 	description?: string;
+	warningText?: string;
 	type?: "conversation" | "confirmation";
 	onConfirm?: () => void;
 }
@@ -14,6 +15,7 @@ interface DialogState {
 	name?: string;
 	title?: string;
 	description?: string;
+	warningText?: string;
 	type?: "conversation" | "confirmation";
 	onConfirm?: () => void;
 	openDialog: (options: OpenDialogOptions) => void;
@@ -33,6 +35,7 @@ export const useDialogStore = create<DialogState>((set) => ({
 			name: options.name,
 			title: options.title,
 			description: options.description,
+			warningText: options.warningText,
 			type: options.type,
 			onConfirm: options.onConfirm,
 		}),
@@ -43,6 +46,7 @@ export const useDialogStore = create<DialogState>((set) => ({
 			name: undefined,
 			title: undefined,
 			description: undefined,
+			warningText: undefined,
 			onConfirm: undefined,
 			type: undefined,
 		}),

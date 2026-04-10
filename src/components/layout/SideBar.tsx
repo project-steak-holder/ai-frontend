@@ -50,6 +50,7 @@ function SideBarContent({ onNavigate }: SideBarContentProps) {
 			name,
 			title: "Delete Conversation",
 			description: "Are you sure you want to delete this conversation?",
+			warningText: `You are about to delete the conversation "${name}". This action cannot be undone.`,
 			onConfirm: async () => {
 				await deleteConversation({ id: conversationId });
 			},
@@ -130,8 +131,6 @@ function SideBarContent({ onNavigate }: SideBarContentProps) {
 					>
 						New Conversation
 					</Button>
-					<ConversationDialog />
-					<ConfirmationDialog />
 				</SignedIn>
 				<SignedOut>
 					<p className="text-sm text-muted-foreground">
@@ -161,6 +160,10 @@ export function SideBar({ open, onOpenChange }: SideBarProps) {
 					<SideBarContent onNavigate={() => onOpenChange?.(false)} />
 				</SheetContent>
 			</Sheet>
+
+			{/* Dialogs rendered once at the SideBar level */}
+			<ConversationDialog />
+			<ConfirmationDialog />
 		</>
 	);
 }

@@ -36,7 +36,6 @@ export function ConversationDialog() {
 			} else {
 				await createConversation({ name: trimmed });
 			}
-			setTitle(name || "");
 			closeDialog();
 		} catch {
 			// Error already handled by mutation's onError
