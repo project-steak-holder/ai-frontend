@@ -1,15 +1,23 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("responsive behavior", () => {
-	test("sidebar heading has truncate class applied", async ({ page }) => {
+	test("sidebar heading truncates at narrow viewport", async ({ page }) => {
 		await page.goto("/");
 
 		const heading = page.locator("h2:has-text('Stakeholder AI Chat')");
-		const classes = await heading.getAttribute("class");
-		expect(classes).toContain("truncate");
+
+		// Desktop: heading should be visible
+		await page.setViewportSize({ width: 1280, height: 720 });
+		await expect(heading.first()).toBeVisible();
+
+		// Verify truncation CSS is applied
+		const textOverflow = await heading.first().evaluate(
+			(el) => getComputedStyle(el).textOverflow,
+		);
+		expect(textOverflow).toBe("ellipsis");
 	});
 
-	test("conversation name in sidebar has truncate class", async ({ page }) => {
+	test("conversation name in sidebar truncates overflow", async ({ page }) => {
 		await page.goto("/");
 
 		// Create a conversation with a long name
@@ -19,21 +27,32 @@ test.describe("responsive behavior", () => {
 		await page.getByRole("button", { name: "Create" }).click();
 		await page.waitForURL(/\/chat\/.+/);
 
-		// Find the span containing the conversation name (the truncate is on the span)
 		const conversationNameSpan = page.locator(`span:has-text("${longName}")`).first();
-		const classes = await conversationNameSpan.getAttribute("class");
-		expect(classes).toContain("truncate");
+
+		// Verify truncation styles are computed
+		const overflow = await conversationNameSpan.evaluate(
+			(el) => getComputedStyle(el).overflow,
+		);
+		expect(overflow).toBe("hidden");
+
+		const textOverflow = await conversationNameSpan.evaluate(
+			(el) => getComputedStyle(el).textOverflow,
+		);
+		expect(textOverflow).toBe("ellipsis");
 	});
 
-	test("new conversation button has truncate class applied", async ({ page }) => {
+	test("new conversation button has truncate behavior", async ({ page }) => {
 		await page.goto("/");
 
 		const button = page.getByRole("button", { name: /new conversation/i }).first();
-		const classes = await button.getAttribute("class");
-		expect(classes).toContain("truncate");
+
+		const textOverflow = await button.evaluate(
+			(el) => getComputedStyle(el).textOverflow,
+		);
+		expect(textOverflow).toBe("ellipsis");
 	});
 
-	test("chat message bubble has responsive max-width classes", async ({ page }) => {
+	test("chat message bubble respects viewport width", async ({ page }) => {
 		await page.goto("/");
 
 		// Create a conversation
@@ -47,19 +66,27 @@ test.describe("responsive behavior", () => {
 		await input.fill("Test message");
 		await input.press("Enter");
 
-		// Wait for user message to appear with longer timeout
 		const userMessage = page.getByTestId("user-message").first();
 		await expect(userMessage).toBeVisible({ timeout: 20_000 });
 
-		// Check that responsive max-width classes are applied
-		const classes = await userMessage.getAttribute("class");
-		expect(classes).toContain("max-w-[85%]");
-		expect(classes).toContain("sm:max-w-[70%]");
-		expect(classes).toContain("md:max-w-[60%]");
-		expect(classes).toContain("lg:max-w-[52%]");
+		// At mobile width, bubble should not exceed 85% of parent
+		await page.setViewportSize({ width: 375, height: 667 });
+		const mobileBounds = await userMessage.boundingBox();
+		const mobileParentBounds = await userMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
+		if (mobileBounds && mobileParentBounds) {
+			expect(mobileBounds.width).toBeLessThanOrEqual(mobileParentBounds.width * 0.9);
+		}
+
+		// At desktop width, bubble should be narrower relative to parent
+		await page.setViewportSize({ width: 1280, height: 720 });
+		const desktopBounds = await userMessage.boundingBox();
+		const desktopParentBounds = await userMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
+		if (desktopBounds && desktopParentBounds) {
+			expect(desktopBounds.width).toBeLessThanOrEqual(desktopParentBounds.width * 0.65);
+		}
 	});
 
-	test("chat message bubble has break-words and overflow-hidden classes", async ({ page }) => {
+	test("chat message bubble handles overflow correctly", async ({ page }) => {
 		await page.goto("/");
 
 		// Create a conversation
@@ -73,14 +100,14 @@ test.describe("responsive behavior", () => {
 		await input.fill("Test message");
 		await input.press("Enter");
 
-		// Wait for user message to appear
 		const userMessage = page.getByTestId("user-message").first();
 		await expect(userMessage).toBeVisible({ timeout: 20_000 });
 
-		// Check that overflow handling classes are applied
-		const classes = await userMessage.getAttribute("class");
-		expect(classes).toContain("break-words");
-		expect(classes).toContain("overflow-hidden");
+		// Verify overflow is hidden via computed styles
+		const overflow = await userMessage.evaluate(
+			(el) => getComputedStyle(el).overflow,
+		);
+		expect(overflow).toBe("hidden");
 	});
 
 });

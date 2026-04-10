@@ -248,10 +248,9 @@ describe("ChatLayout", () => {
 	it("applies AI-specific styles to streaming message bubble", async () => {
 		mockGet.mockResolvedValue([userMessage]);
 
-		render(
-			<ChatLayout conversationId="conv-1" streamedText="Streaming..." />,
-			{ wrapper: createWrapper() },
-		);
+		render(<ChatLayout conversationId="conv-1" streamedText="Streaming..." />, {
+			wrapper: createWrapper(),
+		});
 
 		await waitFor(() => {
 			const bubble = screen.getByTestId("ai-message-streaming");
@@ -265,20 +264,17 @@ describe("ChatLayout", () => {
 	it("applies responsive padding to message container", async () => {
 		mockGet.mockResolvedValue([userMessage]);
 
-		const { container } = render(
-			<ChatLayout conversationId="conv-1" />,
-			{ wrapper: createWrapper() },
-		);
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
 
 		await waitFor(() => {
-			const messageContainer = container.querySelector(
-				".flex.h-full.flex-col.justify-end",
-			);
+			const messageContainer = screen.getByTestId("message-container");
 			expect(messageContainer).toBeInTheDocument();
-			expect(messageContainer?.className).toContain("px-3");
-			expect(messageContainer?.className).toContain("py-4");
-			expect(messageContainer?.className).toContain("sm:px-6");
-			expect(messageContainer?.className).toContain("md:p-16");
+			expect(messageContainer.className).toContain("px-3");
+			expect(messageContainer.className).toContain("py-4");
+			expect(messageContainer.className).toContain("sm:px-6");
+			expect(messageContainer.className).toContain("md:p-16");
 		});
 	});
 });

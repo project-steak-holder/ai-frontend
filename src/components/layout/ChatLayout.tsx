@@ -83,7 +83,10 @@ export function ChatLayout({
 	return (
 		<div ref={scrollAreaContainerRef} className="h-full min-h-0">
 			<ScrollArea className="h-full">
-				<div className="flex h-full flex-col justify-end gap-2 px-3 py-4 sm:gap-3 sm:px-6 sm:py-6 md:p-16">
+				<div
+					data-testid="message-container"
+					className="flex h-full flex-col justify-end gap-2 px-3 py-4 sm:gap-3 sm:px-6 sm:py-6 md:p-16"
+				>
 					{messages?.map((message: Message) => {
 						const isUserMessage = message.type === "USER";
 
