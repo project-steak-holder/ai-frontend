@@ -34,17 +34,30 @@ jobs:
         if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npx playwright install --with-deps chromium
 
+      - name: Start server
+        if: github.base_ref == 'staging' || github.base_ref == 'main'
+        run: node .output/server/index.mjs &
+        env:
+          PORT: 3000
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          AI_SERVICE_BASE_URL: ${{ secrets.STAGING_AI_SERVICE_BASE_URL }}
+          NODE_ENV: production
+
+      - name: Wait for server
+        if: github.base_ref == 'staging' || github.base_ref == 'main'
+        run: npx wait-on http://localhost:3000 --timeout 30000
+
       - name: Run E2E tests
         if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npm run test:e2e
         env:
-          BASE_URL: ${{ vars.STAGING_URL }}
+          BASE_URL: http://localhost:3000
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
 
       - name: Upload Playwright report
-        if: always() && github.base_ref == 'staging' || github.base_ref == 'main'
+        if: always() && (github.base_ref == 'staging' || github.base_ref == 'main')
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
