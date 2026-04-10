@@ -23,6 +23,12 @@ vi.mock("sonner", () => ({
 	toast: { error: vi.fn(), success: vi.fn() },
 }));
 
+const mockNavigate = vi.fn();
+
+vi.mock("@tanstack/react-router", () => ({
+	useNavigate: () => mockNavigate,
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -49,10 +55,16 @@ function createWrapper() {
 describe("useDeleteConversation", () => {
 	beforeEach(() => {
 		mockDeleteConversation.mockReset();
+		mockNavigate.mockReset();
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.clearAllMocks();
+		// Restore default authenticated session mock after each test
+		const { authClient } = await import("@/integrations/neon-auth/client");
+		vi.mocked(authClient.useSession).mockReturnValue({
+			data: { user: { id: "user-1" } },
+		} as ReturnType<typeof authClient.useSession>);
 	});
 
 	it("calls deleteConversation with correct arguments", async () => {
@@ -103,7 +115,7 @@ describe("useDeleteConversation", () => {
 		);
 	});
 
-	it("shows success toast on deletion", async () => {
+	it("shows success toast and navigates to home on deletion", async () => {
 		mockDeleteConversation.mockResolvedValue({ id: "conv-1" });
 		const { toast } = await import("sonner");
 
@@ -117,6 +129,7 @@ describe("useDeleteConversation", () => {
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
 		expect(toast.success).toHaveBeenCalledWith("Conversation deleted");
+		expect(mockNavigate).toHaveBeenCalledWith({ to: "/" });
 	});
 
 	it("shows error toast when mutation fails", async () => {
@@ -176,17 +189,27 @@ describe("useDeleteConversation", () => {
 		mockDeleteConversation.mockResolvedValue(undefined);
 		const { toast } = await import("sonner");
 
-		const { wrapper } = createWrapper();
+		const { queryClient, wrapper } = createWrapper();
+		const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
 		const { result } = renderHook(() => useDeleteConversation(), { wrapper });
 
 		await act(async () => {
 			result.current.mutate({ id: "conv-1" });
 		});
 
-		// The mutation will error because the onSuccess callback tries to destructure undefined
-		await waitFor(() => expect(result.current.isError).toBe(true));
+		// The mutation succeeds but onSuccess guards against undefined
+		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-		// Should report an error (destructuring undefined)
-		expect(result.current.error).toBeDefined();
+		// Should still invalidate the conversations list
+		expect(invalidateSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryKey: ["conversations", "user-1"],
+			}),
+		);
+
+		// Should NOT show success toast, navigate, or invalidate specific conversation when result is undefined
+		expect(toast.success).not.toHaveBeenCalled();
+		expect(mockNavigate).not.toHaveBeenCalled();
 	});
 });
