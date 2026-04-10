@@ -7,6 +7,7 @@ import {
 	waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useDialogStore } from "@/stores/dialogStore";
 import { SideBar } from "../SideBar";
 
 // ---------------------------------------------------------------------------
@@ -164,6 +165,7 @@ describe("SideBar", () => {
 
 	afterEach(() => {
 		cleanup();
+		useDialogStore.getState().closeDialog();
 	});
 
 	it("renders the app title 'Stakeholder AI Chat'", () => {
@@ -323,6 +325,7 @@ describe("SideBar mobile drawer", () => {
 
 	afterEach(() => {
 		cleanup();
+		useDialogStore.getState().closeDialog();
 	});
 
 	it("renders Sheet component for the mobile sidebar", () => {
@@ -402,6 +405,7 @@ describe("SideBar loading state", () => {
 
 	afterEach(() => {
 		cleanup();
+		useDialogStore.getState().closeDialog();
 	});
 
 	it("renders blank when isLoading is true (does not show conversations, error, or empty state)", async () => {

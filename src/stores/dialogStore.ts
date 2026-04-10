@@ -7,7 +7,7 @@ interface OpenDialogOptions {
 	description?: string;
 	warningText?: string;
 	type?: "conversation" | "confirmation";
-	onConfirm?: () => void;
+	onConfirm?: () => void | Promise<void>;
 }
 interface DialogState {
 	isOpen: boolean;
@@ -17,7 +17,7 @@ interface DialogState {
 	description?: string;
 	warningText?: string;
 	type?: "conversation" | "confirmation";
-	onConfirm?: () => void;
+	onConfirm?: () => void | Promise<void>;
 	openDialog: (options: OpenDialogOptions) => void;
 	closeDialog: () => void;
 }

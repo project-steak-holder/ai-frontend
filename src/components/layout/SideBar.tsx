@@ -30,14 +30,16 @@ interface SideBarContentProps {
 function SideBarContent({ onNavigate }: SideBarContentProps) {
 	const { conversations, isLoading, error } = useConversations();
 	const { mutateAsync: deleteConversation } = useDeleteConversation();
-	const { openDialog } = useDialogStore();
+	const openDialog = useDialogStore((state) => state.openDialog);
 	const { conversationId } = useParams({ strict: false });
 
 	const handleCreateConversation = () => {
+		onNavigate?.();
 		openDialog({ type: "conversation" });
 	};
 
 	const handleRenameConversation = (conversationId: string, name: string) => {
+		onNavigate?.();
 		openDialog({ type: "conversation", id: conversationId, name });
 	};
 
@@ -45,6 +47,7 @@ function SideBarContent({ onNavigate }: SideBarContentProps) {
 		conversationId: string,
 		name: string,
 	) => {
+		onNavigate?.();
 		openDialog({
 			type: "confirmation",
 			name,
