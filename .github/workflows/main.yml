@@ -24,20 +24,33 @@ jobs:
       - name: Run check
         run: npm run check
 
-      - name: Run build
+      - name: Run tests
+        run: npm test
+
+  e2e-staging:
+    if: github.base_ref == 'staging'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
         run: npm run build
         env:
           VITE_NEON_AUTH_URL: ${{ secrets.STAGING_AUTH_URL }}
 
-      - name: Run tests
-        run: npm test
-
       - name: Install Playwright browsers
-        if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npx playwright install --with-deps chromium
 
       - name: Start server
-        if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: node .output/server/index.mjs &
         env:
           PORT: 3000
@@ -47,11 +60,9 @@ jobs:
           NODE_ENV: production
 
       - name: Wait for server
-        if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npx wait-on http://localhost:3000 --timeout 30000
 
       - name: Run E2E tests
-        if: github.base_ref == 'staging' || github.base_ref == 'main'
         run: npm run test:e2e
         env:
           BASE_URL: http://localhost:3000
@@ -60,9 +71,60 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
 
       - name: Upload Playwright report
-        if: always() && (github.base_ref == 'staging' || github.base_ref == 'main')
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-staging
+          path: playwright-report/
+          retention-days: 7
+
+  e2e-prod:
+    if: github.base_ref == 'main'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_NEON_AUTH_URL: ${{ secrets.PROD_AUTH_URL }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start server
+        run: node .output/server/index.mjs &
+        env:
+          PORT: 3000
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          AI_SERVICE_BASE_URL: ${{ secrets.PROD_AI_SERVICE_BASE_URL }}
+          VITE_NEON_AUTH_URL: ${{ secrets.PROD_AUTH_URL }}
+          NODE_ENV: production
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 30000
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          BASE_URL: http://localhost:3000
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-prod
           path: playwright-report/
           retention-days: 7
