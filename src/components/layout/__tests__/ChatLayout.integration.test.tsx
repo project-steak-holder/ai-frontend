@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import ChatLayout from "../ChatLayout";
+import { ChatLayout } from "../ChatLayout";
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -15,8 +15,13 @@ vi.mock("@/integrations/neon-auth/client", () => ({
 
 const mockGet = vi.fn();
 
-vi.mock("@server/api/messages", () => ({
+vi.mock("@/server/api/messages", () => ({
 	getMessagesByConversationId: (...args: unknown[]) => mockGet(...args),
+	streamMessage: vi.fn(),
+}));
+
+vi.mock("@/server/api/messages/streamMessage", () => ({
+	streamMessage: vi.fn(),
 }));
 
 vi.mock("@neondatabase/neon-js/auth/react", () => ({
@@ -148,10 +153,10 @@ describe("ChatLayout", () => {
 		});
 	});
 
-	it("shows streaming indicator (SVG) when waitingOnResponse is true", async () => {
+	it("shows streaming indicator (SVG) when streamedText is empty string", async () => {
 		mockGet.mockResolvedValue([userMessage]);
 
-		render(<ChatLayout conversationId="conv-1" waitingOnResponse={true} />, {
+		render(<ChatLayout conversationId="conv-1" streamedText="" />, {
 			wrapper: createWrapper(),
 		});
 
@@ -164,6 +169,21 @@ describe("ChatLayout", () => {
 		expect(svgElements.length).toBeGreaterThan(0);
 	});
 
+	it("shows streamed text when streamedText has content", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(
+			<ChatLayout conversationId="conv-1" streamedText="Streaming reply..." />,
+			{
+				wrapper: createWrapper(),
+			},
+		);
+
+		await waitFor(() => {
+			expect(screen.getByText("Streaming reply...")).toBeInTheDocument();
+		});
+	});
+
 	it("renders multiple messages with both USER and AI content visible", async () => {
 		mockGet.mockResolvedValue([userMessage, aiMessage]);
 
@@ -174,6 +194,87 @@ describe("ChatLayout", () => {
 		await waitFor(() => {
 			expect(screen.getByText("Hello AI")).toBeInTheDocument();
 			expect(screen.getByText("Hello human")).toBeInTheDocument();
+		});
+	});
+
+	it("applies responsive max-width classes to user message bubbles", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("user-message");
+			expect(bubble.className).toContain("max-w-[85%]");
+			expect(bubble.className).toContain("sm:max-w-[70%]");
+			expect(bubble.className).toContain("md:max-w-[60%]");
+			expect(bubble.className).toContain("lg:max-w-[52%]");
+		});
+	});
+
+	it("applies user-specific styles to user message bubbles", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("user-message");
+			expect(bubble.className).toContain("bg-primary");
+			expect(bubble.className).toContain("text-primary-foreground");
+			expect(bubble.className).toContain("rounded-br-sm");
+			expect(bubble.className).toContain("order-1");
+		});
+	});
+
+	it("applies AI-specific styles to AI message bubbles", async () => {
+		mockGet.mockResolvedValue([aiMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("ai-message");
+			expect(bubble.className).toContain("bg-muted");
+			expect(bubble.className).toContain("text-foreground");
+			expect(bubble.className).toContain("rounded-bl-sm");
+			expect(bubble.className).toContain("order-2");
+		});
+	});
+
+	it("applies AI-specific styles to streaming message bubble", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" streamedText="Streaming..." />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const bubble = screen.getByTestId("ai-message-streaming");
+			expect(bubble.className).toContain("bg-muted");
+			expect(bubble.className).toContain("text-foreground");
+			expect(bubble.className).toContain("rounded-bl-sm");
+			expect(bubble.className).toContain("order-2");
+		});
+	});
+
+	it("applies responsive padding to message container", async () => {
+		mockGet.mockResolvedValue([userMessage]);
+
+		render(<ChatLayout conversationId="conv-1" />, {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			const messageContainer = screen.getByTestId("message-container");
+			expect(messageContainer).toBeInTheDocument();
+			expect(messageContainer.className).toContain("px-3");
+			expect(messageContainer.className).toContain("py-4");
+			expect(messageContainer.className).toContain("sm:px-6");
+			expect(messageContainer.className).toContain("md:p-16");
 		});
 	});
 });

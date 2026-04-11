@@ -8,17 +8,12 @@ import {
 	waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateConversationDialog } from "../ConversationDialog";
+import { useDialogStore } from "@/stores/dialogStore";
+import { ConversationDialog } from "../ConversationDialog";
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
-
-const mockNavigate = vi.fn();
-
-vi.mock("@tanstack/react-router", () => ({
-	useNavigate: () => mockNavigate,
-}));
 
 vi.mock("@/integrations/neon-auth/client", () => ({
 	authClient: {
@@ -26,10 +21,16 @@ vi.mock("@/integrations/neon-auth/client", () => ({
 	},
 }));
 
-const mockCreateConversation = vi.fn();
+const mockCreateMutateAsync = vi.fn();
+const mockUpdateMutateAsync = vi.fn();
 
-vi.mock("@server/api/conversations", () => ({
-	createConversation: (...args: unknown[]) => mockCreateConversation(...args),
+vi.mock("@/lib/hooks/conversations", () => ({
+	useCreateConversation: () => ({
+		mutateAsync: mockCreateMutateAsync,
+	}),
+	useUpdateConversation: () => ({
+		mutateAsync: mockUpdateMutateAsync,
+	}),
 }));
 
 vi.mock("sonner", () => ({
@@ -65,13 +66,15 @@ function createWrapper() {
 	);
 }
 
-async function openDialog() {
-	const trigger = screen.getByRole("button", { name: /new conversation/i });
-	await act(async () => {
-		fireEvent.click(trigger);
+function openCreateDialog() {
+	act(() => {
+		useDialogStore.getState().openDialog({ type: "conversation" });
 	});
-	await waitFor(() => {
-		expect(screen.getByRole("dialog")).toBeInTheDocument();
+}
+
+function openRenameDialog(id: string, name: string) {
+	act(() => {
+		useDialogStore.getState().openDialog({ type: "conversation", id, name });
 	});
 }
 
@@ -79,46 +82,68 @@ async function openDialog() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("CreateConversationDialog", () => {
+describe("ConversationDialog", () => {
 	beforeEach(() => {
-		mockCreateConversation.mockReset();
-		mockNavigate.mockReset();
+		mockCreateMutateAsync.mockReset();
+		mockUpdateMutateAsync.mockReset();
+		useDialogStore.getState().closeDialog();
 	});
 
 	afterEach(() => {
 		cleanup();
 	});
 
-	it("renders the 'New Conversation' trigger button", () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+	it("does not render dialog content when store is closed", () => {
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		expect(
-			screen.getByRole("button", { name: /new conversation/i }),
-		).toBeInTheDocument();
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 	});
 
-	it("opens dialog when button is clicked (dialog role + input placeholder visible)", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+	it("opens dialog when store is set to conversation type", async () => {
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
 
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
+	});
+
+	it("shows input placeholder when dialog is open", async () => {
+		render(<ConversationDialog />, { wrapper: createWrapper() });
+
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(
+				screen.getByPlaceholderText(/requirements elicitation/i),
+			).toBeInTheDocument();
+		});
+
+		// Verify input is accessible by role and accessible name (WCAG 1.3.1)
 		expect(
-			screen.getByPlaceholderText(/requirements elicitation/i),
+			screen.getByRole("textbox", { name: /conversation name/i }),
 		).toBeInTheDocument();
 	});
 
 	it("Create button is disabled when title input is empty", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
 
-		expect(screen.getByRole("button", { name: /^create$/i })).toBeDisabled();
+		await waitFor(() => {
+			expect(screen.getByRole("button", { name: /^create$/i })).toBeDisabled();
+		});
 	});
 
 	it("Create button is enabled when title has content", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
 
 		const input = screen.getByPlaceholderText(/requirements elicitation/i);
 		await act(async () => {
@@ -128,15 +153,19 @@ describe("CreateConversationDialog", () => {
 		expect(screen.getByRole("button", { name: /^create$/i })).toBeEnabled();
 	});
 
-	it("calls createConversation with trimmed title on Create click", async () => {
-		mockCreateConversation.mockResolvedValue({
+	it("calls createConversation mutateAsync with trimmed title on Create click", async () => {
+		mockCreateMutateAsync.mockResolvedValue({
 			id: "conv-1",
 			name: "My Conversation",
 		});
 
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
 
 		const input = screen.getByPlaceholderText(/requirements elicitation/i);
 		await act(async () => {
@@ -148,23 +177,25 @@ describe("CreateConversationDialog", () => {
 		});
 
 		await waitFor(() => {
-			expect(mockCreateConversation).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: expect.objectContaining({ name: "My Conversation" }),
-				}),
-			);
+			expect(mockCreateMutateAsync).toHaveBeenCalledWith({
+				name: "My Conversation",
+			});
 		});
 	});
 
-	it("closes dialog and calls navigate after successful creation", async () => {
-		mockCreateConversation.mockResolvedValue({
+	it("closes dialog after successful creation", async () => {
+		mockCreateMutateAsync.mockResolvedValue({
 			id: "conv-42",
 			name: "Success Conv",
 		});
 
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
 
 		const input = screen.getByPlaceholderText(/requirements elicitation/i);
 		await act(async () => {
@@ -178,14 +209,16 @@ describe("CreateConversationDialog", () => {
 		await waitFor(() => {
 			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 		});
-
-		expect(mockNavigate).toHaveBeenCalledWith({ to: "/chat/conv-42" });
 	});
 
 	it("Cancel button closes dialog without calling createConversation", async () => {
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
 
 		await act(async () => {
 			fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
@@ -195,18 +228,22 @@ describe("CreateConversationDialog", () => {
 			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 		});
 
-		expect(mockCreateConversation).not.toHaveBeenCalled();
+		expect(mockCreateMutateAsync).not.toHaveBeenCalled();
 	});
 
 	it("Enter key submits the form and calls createConversation", async () => {
-		mockCreateConversation.mockResolvedValue({
+		mockCreateMutateAsync.mockResolvedValue({
 			id: "conv-99",
 			name: "Enter Conv",
 		});
 
-		render(<CreateConversationDialog />, { wrapper: createWrapper() });
+		render(<ConversationDialog />, { wrapper: createWrapper() });
 
-		await openDialog();
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
 
 		const input = screen.getByPlaceholderText(/requirements elicitation/i);
 		await act(async () => {
@@ -218,11 +255,110 @@ describe("CreateConversationDialog", () => {
 		});
 
 		await waitFor(() => {
-			expect(mockCreateConversation).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: expect.objectContaining({ name: "Enter Conv" }),
-				}),
-			);
+			expect(mockCreateMutateAsync).toHaveBeenCalledWith({
+				name: "Enter Conv",
+			});
 		});
+	});
+
+	it("shows Rename button and calls updateConversation when conversationId is present", async () => {
+		mockUpdateMutateAsync.mockResolvedValue({
+			id: "conv-1",
+			name: "Renamed",
+		});
+
+		render(<ConversationDialog />, { wrapper: createWrapper() });
+
+		openRenameDialog("conv-1", "Old Name");
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
+
+		const input = screen.getByPlaceholderText(/requirements elicitation/i);
+		expect(input).toHaveValue("Old Name");
+
+		await act(async () => {
+			fireEvent.change(input, { target: { value: "Renamed" } });
+		});
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole("button", { name: /^rename$/i }));
+		});
+
+		await waitFor(() => {
+			expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+				id: "conv-1",
+				name: "Renamed",
+			});
+		});
+
+		// Verify dialog closes after successful rename
+		await waitFor(() => {
+			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+		});
+	});
+
+	it("handles createConversation rejection silently without closing dialog", async () => {
+		const error = new Error("Failed to create conversation");
+		mockCreateMutateAsync.mockRejectedValue(error);
+
+		render(<ConversationDialog />, { wrapper: createWrapper() });
+
+		openCreateDialog();
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
+
+		const input = screen.getByPlaceholderText(/requirements elicitation/i);
+		await act(async () => {
+			fireEvent.change(input, { target: { value: "Failed Conversation" } });
+		});
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+		});
+
+		await waitFor(() => {
+			expect(mockCreateMutateAsync).toHaveBeenCalledWith({
+				name: "Failed Conversation",
+			});
+		});
+
+		// Dialog should still be open after the rejection
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
+	});
+
+	it("handles updateConversation rejection silently without closing dialog", async () => {
+		const error = new Error("Failed to update conversation");
+		mockUpdateMutateAsync.mockRejectedValue(error);
+
+		render(<ConversationDialog />, { wrapper: createWrapper() });
+
+		openRenameDialog("conv-1", "Old Name");
+
+		await waitFor(() => {
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
+		});
+
+		const input = screen.getByPlaceholderText(/requirements elicitation/i);
+		await act(async () => {
+			fireEvent.change(input, { target: { value: "New Name" } });
+		});
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole("button", { name: /^rename$/i }));
+		});
+
+		await waitFor(() => {
+			expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+				id: "conv-1",
+				name: "New Name",
+			});
+		});
+
+		// Dialog should still be open after the rejection
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
 	});
 });

@@ -1,18 +1,18 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, RawStream } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { env } from "@/env";
 import { db } from "@/lib/db";
 import { Conversation } from "@/lib/schema/runtime";
 
-export const sendMessage = createServerFn({
+export const streamMessage = createServerFn({
 	method: "POST",
 })
 	.inputValidator(
 		z.object({
 			conversationId: z.uuid(),
 			userId: z.uuid(),
-			content: z.string().min(1),
+			content: z.string().min(1).max(5000),
 			token: z.string().min(1),
 		}),
 	)
@@ -32,20 +32,24 @@ export const sendMessage = createServerFn({
 			throw new Error("Conversation not found");
 		}
 
-		const response = await fetch(`${env.AI_SERVICE_BASE_URL}/api/v1/generate`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${data.token}`,
+		const response = await fetch(
+			`${env.AI_SERVICE_BASE_URL}/api/v2/generate/stream`,
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${data.token}`,
+				},
+				body: JSON.stringify({
+					conversation_id: data.conversationId,
+					content: data.content,
+					stream: true,
+				}),
 			},
-			body: JSON.stringify({
-				conversation_id: data.conversationId,
-				content: data.content,
-			}),
-		});
+		);
 
 		if (!response.ok) {
-			let errorMessage = "Failed to send message";
+			let errorMessage = "Failed to stream response";
 
 			try {
 				const errorBody = (await response.json()) as
@@ -55,13 +59,17 @@ export const sendMessage = createServerFn({
 				errorMessage =
 					errorBody?.message ??
 					errorBody?.error ??
-					`Failed to send message (${response.status})`;
+					`Failed to stream response (${response.status})`;
 			} catch {
-				errorMessage = `Failed to send message (${response.status})`;
+				errorMessage = `Failed to stream response (${response.status})`;
 			}
 
 			throw new Error(errorMessage);
 		}
 
-		return response.json();
+		if (!response.body) {
+			throw new Error("No response body from AI service");
+		}
+
+		return new RawStream(response.body, { hint: "text" });
 	});

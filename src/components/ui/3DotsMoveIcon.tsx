@@ -42,4 +42,4 @@ const ThreeDotsMoveIcon = ({
   );
 };
 
-export default ThreeDotsMoveIcon;
+export { ThreeDotsMoveIcon };

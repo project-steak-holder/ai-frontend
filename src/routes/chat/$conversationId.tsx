@@ -1,12 +1,10 @@
+import { authClient } from "@integrations/neon-auth/client";
 import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import type { SubmitEventHandler } from "react";
 import { z } from "zod";
-import ChatLayout from "@/components/layout/ChatLayout";
+import { ChatLayout } from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/integrations/neon-auth/client";
-import { useSendMessage } from "@/lib/hooks/messages/useSendMessage";
-import { guard } from "@/lib/utils";
+import { useStreamingResponse } from "@/lib/hooks/messages";
 
 const ConversationIdSchema = z.uuid();
 
@@ -22,34 +20,27 @@ export const Route = createFileRoute("/chat/$conversationId")({
 function ChatPage() {
 	const { conversationId } = Route.useParams();
 	const { data: session } = authClient.useSession();
-	const userId = session?.user?.id;
-	const { mutateAsync: sendMessage, isPending } = useSendMessage();
+	const { sendMessage, streamedText, isStreaming } =
+		useStreamingResponse(conversationId);
 
-	const handleSendMessage = async (message: string) => {
-		const safeUserId = guard(userId, "You must be signed in to send a message");
-
-		await sendMessage({ conversationId, content: message, userId: safeUserId });
-	};
-
-	const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
+	const handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void = (e) => {
 		e.preventDefault();
 		const input = e.currentTarget.elements.namedItem(
 			"message",
 		) as HTMLInputElement;
 		if (!input.value.trim()) return;
-		handleSendMessage(input.value)
-			.then(() => {
-				input.value = "";
-			})
-			.catch(() => {});
+		sendMessage(input.value);
+		input.value = "";
 	};
+
 	return (
 		<div className="flex flex-col h-full">
 			<SignedIn>
 				<div className="flex-1 min-h-0 p-4">
 					<ChatLayout
 						conversationId={conversationId}
-						waitingOnResponse={isPending}
+						streamedText={isStreaming ? streamedText : undefined}
+						user={session?.user}
 					/>
 				</div>
 
@@ -60,7 +51,8 @@ function ChatPage() {
 							type="text"
 							placeholder="Type a message..."
 							autoComplete="off"
-							disabled={isPending}
+							maxLength={5000}
+							disabled={isStreaming}
 						/>
 					</form>
 				</div>

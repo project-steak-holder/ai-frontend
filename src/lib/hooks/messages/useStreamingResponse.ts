@@ -1,183 +1,246 @@
-import { useCallback, useState } from "react";
+import {
+	experimental_streamedQuery as streamedQuery,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "@/integrations/neon-auth/client";
+import type { Message } from "@/lib/schema/Message";
+import { streamMessage } from "@/server/api/messages/streamMessage";
 
-interface StreamMessageInput {
-	conversationId: string;
+export interface SSEPartial {
 	content: string;
-	onChunk?: (chunk: string) => void;
+	partial: true;
 }
 
-const toChunkText = (dataLine: string) => {
+export interface SSEComplete {
+	complete: true;
+}
+
+export interface SSEError {
+	error: string;
+	details?: Record<string, unknown>;
+}
+
+export type SSEEvent = SSEPartial | SSEComplete | SSEError;
+
+export const parseSSEEvent = (dataLine: string): SSEEvent | null => {
 	const trimmed = dataLine.trim();
 
-	if (!trimmed || trimmed === "[DONE]") {
-		return "";
+	if (!trimmed) {
+		return null;
 	}
 
 	try {
-		const parsed = JSON.parse(trimmed) as
-			| {
-					content?: string;
-					text?: string;
-					delta?: string;
-					token?: string;
-					message?: { content?: string };
-			  }
-			| string;
-
-		if (typeof parsed === "string") {
-			return parsed;
+		const parsed = JSON.parse(trimmed);
+		if (
+			typeof parsed === "object" &&
+			parsed !== null &&
+			("partial" in parsed || "complete" in parsed || "error" in parsed)
+		) {
+			return parsed as SSEEvent;
 		}
-
-		return (
-			parsed.delta ??
-			parsed.token ??
-			parsed.content ??
-			parsed.text ??
-			parsed.message?.content ??
-			""
-		);
+		return null;
 	} catch {
-		return trimmed;
+		return null;
 	}
 };
 
-export const useStreamingResponse = () => {
-	const [streamedText, setStreamedText] = useState("");
-	const [isStreaming, setIsStreaming] = useState(false);
-	const [streamError, setStreamError] = useState<string | null>(null);
+export async function* parseSSEStream(
+	stream: ReadableStream<Uint8Array>,
+): AsyncGenerator<string> {
+	const reader = stream.getReader();
+	const decoder = new TextDecoder();
+	let pending = "";
 
-	const streamMessage = useCallback(
-		async ({ conversationId, content, onChunk }: StreamMessageInput) => {
-			setIsStreaming(true);
-			setStreamError(null);
-			setStreamedText("");
+	try {
+		while (true) {
+			const { value, done } = await reader.read();
 
-			let token: string | null = null;
+			if (done) {
+				break;
+			}
 
-			const { data } = await authClient.getSession({
-				fetchOptions: {
-					onSuccess: (ctx) => {
-						token = ctx.response.headers.get("set-auth-jwt");
+			pending += decoder.decode(value, { stream: true });
+			const lines = pending.split("\n");
+			pending = lines.pop() ?? "";
+
+			for (const line of lines) {
+				const normalized = line.trim();
+
+				if (!normalized) {
+					continue;
+				}
+
+				const rawData = normalized.startsWith("data:")
+					? normalized.slice(5)
+					: normalized;
+
+				const event = parseSSEEvent(rawData);
+
+				if (!event) {
+					continue;
+				}
+
+				if ("error" in event) {
+					yield event.error;
+					return;
+				}
+
+				if ("complete" in event) {
+					return;
+				}
+
+				if ("partial" in event && event.content) {
+					yield event.content;
+				}
+			}
+		}
+	} finally {
+		reader.releaseLock();
+	}
+}
+
+interface StreamRequest {
+	conversationId: string;
+	content: string;
+	id: number;
+}
+
+export const useStreamingResponse = (conversationId: string) => {
+	const { data: session } = authClient.useSession();
+	const userId = session?.user?.id;
+	const queryClient = useQueryClient();
+
+	const [streamRequest, setStreamRequest] = useState<StreamRequest | null>(
+		null,
+	);
+	const requestIdRef = useRef(0);
+
+	const query = useQuery<string>({
+		queryKey: ["streamResponse", conversationId, streamRequest?.id],
+		queryFn: streamedQuery<string, string>({
+			streamFn: async () => {
+				if (!streamRequest) {
+					throw new Error("No stream request");
+				}
+
+				let token: string | null = null;
+
+				const { data } = await authClient.getSession({
+					fetchOptions: {
+						onSuccess: (ctx) => {
+							token = ctx.response.headers.get("set-auth-jwt");
+						},
 					},
-				},
+				});
+
+				if (!token && typeof data?.session?.token === "string") {
+					token = data.session.token;
+				}
+
+				if (!token || !userId) {
+					throw new Error("You must be signed in to stream a response");
+				}
+
+				const stream = await streamMessage({
+					data: {
+						conversationId: streamRequest.conversationId,
+						userId,
+						content: streamRequest.content,
+						token,
+					},
+				});
+
+				if (!(stream instanceof ReadableStream)) {
+					throw new Error("Expected a readable stream response");
+				}
+
+				return parseSSEStream(stream);
+			},
+			reducer: (acc: string, chunk: string) => acc + chunk,
+			initialValue: "",
+		}),
+		enabled: !!streamRequest && !!userId,
+	});
+
+	const isFetching = query.fetchStatus === "fetching";
+
+	useEffect(() => {
+		if (!streamRequest || isFetching) {
+			return;
+		}
+
+		const messagesKey = ["messages", userId, conversationId];
+
+		if (query.isSuccess) {
+			queryClient
+				.invalidateQueries({ queryKey: messagesKey })
+				.catch(() => {
+					// Silently ignore invalidation failures - still reset stream request
+				})
+				.finally(() => {
+					setStreamRequest(null);
+				});
+			return;
+		}
+
+		if (query.isError) {
+			queryClient.invalidateQueries({ queryKey: messagesKey });
+			toast.error("Error streaming response");
+		}
+
+		setStreamRequest(null);
+	}, [
+		isFetching,
+		query.isSuccess,
+		query.isError,
+		streamRequest,
+		queryClient,
+		userId,
+		conversationId,
+	]);
+
+	const sendMessage = useCallback(
+		(content: string) => {
+			requestIdRef.current += 1;
+
+			const messagesKey = ["messages", userId, conversationId];
+			const now = new Date().toISOString();
+			const optimisticMessage: Message = {
+				id: `optimistic-${Date.now()}`,
+				conversationId,
+				userId: userId as string,
+				content,
+				type: "USER",
+				createdAt: now,
+				updatedAt: now,
+			};
+
+			queryClient.setQueryData<Message[]>(messagesKey, (current) => {
+				if (!current) {
+					return [optimisticMessage];
+				}
+
+				return [...current, optimisticMessage];
 			});
 
-			if (!token && typeof data?.session?.token === "string") {
-				token = data.session.token;
-			}
-
-			if (!token) {
-				const error = "You must be signed in to stream a response";
-				setStreamError(error);
-				setIsStreaming(false);
-				throw new Error(error);
-			}
-
-			// TODO: move this fetch to a createServerFn — AI_SERVICE_BASE_URL is server-only
-			const response = await fetch(`/api/v1/generate`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({
-					conversation_id: conversationId,
-					content,
-					stream: true,
-				}),
+			setStreamRequest({
+				conversationId,
+				content,
+				id: requestIdRef.current,
 			});
-
-			if (!response.ok) {
-				let errorMessage = "Failed to stream response";
-
-				try {
-					const errorBody = (await response.json()) as
-						| { message?: string; error?: string }
-						| undefined;
-
-					errorMessage =
-						errorBody?.message ??
-						errorBody?.error ??
-						`Failed to stream response (${response.status})`;
-				} catch {
-					errorMessage = `Failed to stream response (${response.status})`;
-				}
-
-				setStreamError(errorMessage);
-				setIsStreaming(false);
-				throw new Error(errorMessage);
-			}
-
-			if (!response.body) {
-				setIsStreaming(false);
-				return "";
-			}
-
-			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
-			let pending = "";
-			let completeText = "";
-
-			try {
-				while (true) {
-					const { value, done } = await reader.read();
-
-					if (done) {
-						break;
-					}
-
-					pending += decoder.decode(value, { stream: true });
-					const lines = pending.split("\n");
-					pending = lines.pop() ?? "";
-
-					for (const line of lines) {
-						const normalized = line.trim();
-
-						if (!normalized) {
-							continue;
-						}
-
-						const rawData = normalized.startsWith("data:")
-							? normalized.slice(5)
-							: normalized;
-
-						const chunk = toChunkText(rawData);
-
-						if (!chunk) {
-							continue;
-						}
-
-						setStreamedText((current) => current + chunk);
-						onChunk?.(chunk);
-						completeText += chunk;
-					}
-				}
-
-				return completeText;
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error
-						? error.message
-						: "Failed while reading streaming response";
-				setStreamError(errorMessage);
-				throw error;
-			} finally {
-				try {
-					await reader.cancel();
-				} catch {
-					// no-op
-				}
-				setIsStreaming(false);
-			}
 		},
-		[],
+		[conversationId, userId, queryClient],
 	);
 
+	const isActive = !!streamRequest;
+
 	return {
-		streamMessage,
-		streamedText,
-		isStreaming,
-		streamError,
+		sendMessage,
+		streamedText: isActive ? (query.data ?? "") : "",
+		isStreaming: isActive,
+		streamError: query.error?.message ?? null,
 	};
 };

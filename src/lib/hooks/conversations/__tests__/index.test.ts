@@ -13,6 +13,7 @@ vi.mock("@server/api/conversations", () => ({
 	getConversations: vi.fn(),
 	getConversationById: vi.fn(),
 	createConversation: vi.fn(),
+	deleteConversation: vi.fn(),
 	updateConversation: vi.fn(),
 }));
 
@@ -30,6 +31,7 @@ describe("conversations hooks barrel export", () => {
 		expect(typeof mod.useConversation).toBe("function");
 		expect(typeof mod.useConversations).toBe("function");
 		expect(typeof mod.useCreateConversation).toBe("function");
+		expect(typeof mod.useDeleteConversation).toBe("function");
 		expect(typeof mod.useUpdateConversation).toBe("function");
 	});
 });

@@ -1,20 +1,39 @@
-import { UserAvatar } from "@neondatabase/neon-js/auth/react";
 import { UserRound } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useMessagesByConversationId } from "@/lib/hooks/messages";
 import type { Message } from "@/lib/schema/Message";
 import { cn } from "@/lib/utils";
-import ThreeDotsMoveIcon from "../ui/3DotsMoveIcon";
+import { ThreeDotsMoveIcon } from "../ui/3DotsMoveIcon";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ScrollArea } from "../ui/scroll-area";
 
 interface ChatLayoutProps {
 	conversationId: string;
-	waitingOnResponse?: boolean;
+	streamedText?: string;
+	user?: { name: string; image?: string | null };
 }
 
-export default function ChatLayout({
+function messageBubbleCn(isUser: boolean): string {
+	return cn(
+		"max-w-[85%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-anywhere overflow-hidden",
+		isUser ? "order-1" : "order-2",
+		isUser
+			? "bg-primary text-primary-foreground rounded-br-sm"
+			: "bg-muted text-foreground rounded-bl-sm",
+	);
+}
+
+function getInitials(name: string): string {
+	const parts = name.trim().split(/\s+/);
+	if (parts.length >= 2)
+		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+	return name.slice(0, 2).toUpperCase();
+}
+
+export function ChatLayout({
 	conversationId,
-	waitingOnResponse,
+	streamedText,
+	user,
 }: ChatLayoutProps) {
 	const scrollAreaContainerRef = useRef<HTMLDivElement | null>(null);
 	const {
@@ -26,7 +45,7 @@ export default function ChatLayout({
 
 	useEffect(() => {
 		if (!conversationId) return;
-		if (messageCount === 0 && !waitingOnResponse) return;
+		if (messageCount === 0 && !streamedText) return;
 
 		const viewport = scrollAreaContainerRef.current?.querySelector(
 			'[data-slot="scroll-area-viewport"]',
@@ -35,7 +54,7 @@ export default function ChatLayout({
 		if (!viewport) return;
 
 		viewport.scrollTop = viewport.scrollHeight;
-	}, [conversationId, messageCount, waitingOnResponse]);
+	}, [conversationId, messageCount, streamedText]);
 
 	if (isLoading) {
 		return (
@@ -64,7 +83,10 @@ export default function ChatLayout({
 	return (
 		<div ref={scrollAreaContainerRef} className="h-full min-h-0">
 			<ScrollArea className="h-full">
-				<div className="flex h-full flex-col justify-end gap-3 p-16">
+				<div
+					data-testid="message-container"
+					className="flex h-full flex-col justify-end gap-2 px-3 py-4 sm:gap-3 sm:px-6 sm:py-6 md:p-16"
+				>
 					{messages?.map((message: Message) => {
 						const isUserMessage = message.type === "USER";
 
@@ -77,40 +99,47 @@ export default function ChatLayout({
 								)}
 							>
 								{isUserMessage ? (
-									<UserAvatar
-										size={"lg"}
-										className={cn(
-											"h-8 w-8 shrink-0 text-muted-foreground",
-											isUserMessage ? "order-2" : "order-1",
+									<Avatar
+										data-testid="user-avatar"
+										size="sm"
+										className="order-2 shrink-0"
+									>
+										{user?.image && (
+											<AvatarImage src={user.image} alt={user.name} />
 										)}
-									/>
+										<AvatarFallback>
+											{user ? (
+												getInitials(user.name)
+											) : (
+												<UserRound className="h-3 w-3" />
+											)}
+										</AvatarFallback>
+									</Avatar>
 								) : (
 									<UserRound
 										className={cn(
 											"h-4 w-4 shrink-0 text-muted-foreground",
-											isUserMessage ? "order-2" : "order-1",
+											"order-1",
 										)}
 									/>
 								)}
 								<div
 									data-testid={isUserMessage ? "user-message" : "ai-message"}
-									className={cn(
-										"max-w-[52%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap wrap-break-word",
-										isUserMessage ? "order-1" : "order-2",
-										isUserMessage
-											? "bg-primary text-primary-foreground rounded-br-sm"
-											: "bg-muted text-foreground rounded-bl-sm",
-									)}
+									className={messageBubbleCn(isUserMessage)}
 								>
 									{message.content}
 								</div>
 							</div>
 						);
 					})}
-					{waitingOnResponse && (
-						<div className="flex w-full justify-start">
-							<div className="rounded-2xl px-4 py-2 text-sm bg-muted text-foreground rounded-bl-sm">
-								<ThreeDotsMoveIcon />
+					{streamedText != null && (
+						<div className="flex w-full items-center gap-2 justify-start">
+							<UserRound className="h-4 w-4 shrink-0 text-muted-foreground order-1" />
+							<div
+								data-testid="ai-message-streaming"
+								className={messageBubbleCn(false)}
+							>
+								{streamedText || <ThreeDotsMoveIcon />}
 							</div>
 						</div>
 					)}

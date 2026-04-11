@@ -11,9 +11,12 @@ vi.mock("@/integrations/neon-auth/client", () => ({
 	},
 }));
 
-vi.mock("@server/api/messages", () => ({
+vi.mock("@/server/api/messages", () => ({
 	getMessagesByConversationId: vi.fn(),
-	sendMessage: vi.fn(),
+}));
+
+vi.mock("@/server/api/messages/streamMessage", () => ({
+	streamMessage: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -24,6 +27,6 @@ describe("messages hooks barrel export", () => {
 	it("exports all expected hooks", async () => {
 		const mod = await import("../index");
 		expect(typeof mod.useMessagesByConversationId).toBe("function");
-		expect(typeof mod.useSendMessage).toBe("function");
+		expect(typeof mod.useStreamingResponse).toBe("function");
 	});
 });
