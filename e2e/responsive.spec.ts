@@ -47,20 +47,20 @@ test("new conversation button has truncate behavior", async ({ page }) => {
 
 		// At mobile width, bubble should not exceed 85% of parent
 		await page.setViewportSize({ width: 375, height: 667 });
-		await userMessage.scrollIntoViewIfNeeded();
-		await expect(userMessage).toBeVisible();
-		const mobileBounds = await userMessage.boundingBox();
-		const mobileParentBounds = await userMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
+		const mobileMessage = page.getByTestId("user-message").first();
+		await expect(mobileMessage).toBeVisible();
+		const mobileBounds = await mobileMessage.boundingBox();
+		const mobileParentBounds = await mobileMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
 		expect(mobileBounds, "user message bounding box should not be null at mobile width").not.toBeNull();
 		expect(mobileParentBounds, "parent bounding box should not be null at mobile width").not.toBeNull();
 		expect(mobileBounds!.width).toBeLessThanOrEqual(mobileParentBounds!.width * 0.9);
 
 		// At desktop width, bubble should be narrower relative to parent
 		await page.setViewportSize({ width: 1280, height: 720 });
-		await userMessage.scrollIntoViewIfNeeded();
-		await expect(userMessage).toBeVisible();
-		const desktopBounds = await userMessage.boundingBox();
-		const desktopParentBounds = await userMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
+		const desktopMessage = page.getByTestId("user-message").first();
+		await expect(desktopMessage).toBeVisible();
+		const desktopBounds = await desktopMessage.boundingBox();
+		const desktopParentBounds = await desktopMessage.evaluateHandle((el) => el.parentElement).then((h) => h.asElement()?.boundingBox());
 		expect(desktopBounds, "user message bounding box should not be null at desktop width").not.toBeNull();
 		expect(desktopParentBounds, "parent bounding box should not be null at desktop width").not.toBeNull();
 		expect(desktopBounds!.width).toBeLessThanOrEqual(desktopParentBounds!.width * 0.65);
