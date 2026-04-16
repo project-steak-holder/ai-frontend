@@ -1,6 +1,6 @@
+import { authClient } from "@integrations/neon-auth/client";
 import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import type { SubmitEventHandler } from "react";
 import { z } from "zod";
 import { ChatLayout } from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
@@ -19,16 +19,17 @@ export const Route = createFileRoute("/chat/$conversationId")({
 
 function ChatPage() {
 	const { conversationId } = Route.useParams();
-	const { streamMessage, streamedText, isStreaming } =
+	const { data: session } = authClient.useSession();
+	const { sendMessage, streamedText, isStreaming } =
 		useStreamingResponse(conversationId);
 
-	const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
+	const handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void = (e) => {
 		e.preventDefault();
 		const input = e.currentTarget.elements.namedItem(
 			"message",
 		) as HTMLInputElement;
 		if (!input.value.trim()) return;
-		streamMessage(input.value);
+		sendMessage(input.value);
 		input.value = "";
 	};
 
@@ -39,6 +40,7 @@ function ChatPage() {
 					<ChatLayout
 						conversationId={conversationId}
 						streamedText={isStreaming ? streamedText : undefined}
+						user={session?.user}
 					/>
 				</div>
 
@@ -49,6 +51,7 @@ function ChatPage() {
 							type="text"
 							placeholder="Type a message..."
 							autoComplete="off"
+							maxLength={5000}
 							disabled={isStreaming}
 						/>
 					</form>

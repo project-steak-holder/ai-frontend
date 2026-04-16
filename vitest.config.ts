@@ -20,8 +20,17 @@ export default defineConfig({
 				"**/node_modules/**",
 				"**/dist/**",
 				"**/coverage/**",
+				"**/__tests__/**",
 				"src/routeTree.gen.ts",
-				"src/components/ui/**"
+				"src/components/ui/**",
+				"src/routes/auth/**",
+				"src/routes/account/**",
+				"src/env.ts",
+				"src/router.tsx",
+				"**/integrations/**",
+				"**/index.ts",
+				"**/runtime.ts",
+				"**/types.ts"
 			],
 			include: ["src/**/*.{ts,tsx}"],
 			thresholds: {

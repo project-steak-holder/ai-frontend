@@ -24,6 +24,11 @@ const config = defineConfig({
 	},
 	plugins: [
 		devtools(),
+		tanstackStart({
+			router: {
+				routeFileIgnorePattern: "__tests__",
+			},
+		}),
 		nitro({
 			plugins: ["src/server/plugins/security-headers"],
 		}),
@@ -31,7 +36,6 @@ const config = defineConfig({
 			projects: ["./tsconfig.json"],
 		}),
 		tailwindcss(),
-		tanstackStart(),
 		viteReact(),
 	],
 });

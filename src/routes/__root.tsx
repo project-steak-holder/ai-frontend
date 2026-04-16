@@ -6,13 +6,14 @@ import {
 	HeadContent,
 	Scripts,
 } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { RootErrorBoundary } from "@/components/error-handling/RootErrorBoundary";
 import { RouteErrorBoundary } from "@/components/error-handling/RouteErrorBoundary";
+import { Header } from "@/components/layout/Header";
 import { SideBar } from "@/components/layout/SideBar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Header } from "../components/layout/Header";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -53,6 +54,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
 	return (
 		<html lang="en" className="dark" suppressHydrationWarning>
 			<head>
@@ -73,9 +76,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					>
 						<TooltipProvider>
 							<div className="flex h-screen">
-								<SideBar />
-								<div className="flex-1 flex flex-col">
-									<Header />
+								<SideBar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+
+								<div className="flex-1 flex flex-col min-w-0">
+									<Header onMenuClick={() => setSidebarOpen(true)} />
+
 									<main className="flex-1 overflow-auto">{children}</main>
 									<Toaster />
 								</div>

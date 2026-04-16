@@ -52,10 +52,17 @@ export interface ChainMock {
 	limit: Mock;
 	update: Mock;
 	set: Mock;
+	delete: Mock;
 	/** Resolve the terminal operation (returning / limit / orderBy) with `data`. */
 	resolveWith: (data: unknown) => void;
 	/** Make the terminal operation reject with `error`. */
 	rejectWith: (error: Error) => void;
+	/**
+	 * Feed values in order per `.then()` call.
+	 * First `await` resolves with `values[0]`, second with `values[1]`, etc.
+	 * After exhaustion, subsequent calls reject with an error (fail-fast).
+	 */
+	resolveWithSequence: (values: unknown[]) => void;
 }
 
 /**
@@ -67,6 +74,24 @@ export interface ChainMock {
  */
 export function createDbChainMock(): ChainMock {
 	let terminalValue: Promise<unknown> = Promise.resolve([]);
+	let sequence: unknown[] | null = null;
+	let sequenceIndex = 0;
+
+	function getTerminalValue(): Promise<unknown> {
+		if (sequence) {
+			if (sequenceIndex >= sequence.length) {
+				return Promise.reject(
+					new Error(
+						`getTerminalValue: scripted DB sequence exhausted at index ${sequenceIndex} (length ${sequence.length}). Unexpected extra DB call.`,
+					),
+				);
+			}
+			const value = sequence[sequenceIndex];
+			sequenceIndex++;
+			return Promise.resolve(value);
+		}
+		return terminalValue;
+	}
 
 	const chain: ChainMock = {
 		insert: vi.fn(),
@@ -79,12 +104,19 @@ export function createDbChainMock(): ChainMock {
 		limit: vi.fn(),
 		update: vi.fn(),
 		set: vi.fn(),
+		delete: vi.fn(),
 
 		resolveWith(data: unknown) {
+			sequence = null;
 			terminalValue = Promise.resolve(data);
 		},
 		rejectWith(error: Error) {
+			sequence = null;
 			terminalValue = Promise.reject(error);
+		},
+		resolveWithSequence(values: unknown[]) {
+			sequence = values;
+			sequenceIndex = 0;
 		},
 	};
 
@@ -94,7 +126,7 @@ export function createDbChainMock(): ChainMock {
 		get(_target, prop) {
 			if (prop === "then") {
 				return (resolve: (v: unknown) => void, reject: (e: unknown) => void) =>
-					terminalValue.then(resolve, reject);
+					getTerminalValue().then(resolve, reject);
 			}
 			if (prop in chain) {
 				return (...args: unknown[]) => {
@@ -118,6 +150,7 @@ export function createDbChainMock(): ChainMock {
 		"limit",
 		"update",
 		"set",
+		"delete",
 	] as const) {
 		chain[key] = vi.fn().mockImplementation(() => new Proxy({}, proxyHandler));
 	}

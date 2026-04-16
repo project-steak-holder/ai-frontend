@@ -12,7 +12,7 @@ export const streamMessage = createServerFn({
 		z.object({
 			conversationId: z.uuid(),
 			userId: z.uuid(),
-			content: z.string().min(1),
+			content: z.string().min(1).max(5000),
 			token: z.string().min(1),
 		}),
 	)

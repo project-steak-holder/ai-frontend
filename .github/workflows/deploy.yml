@@ -38,7 +38,7 @@ jobs:
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:${{ github.sha }}
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:latest
           build-args: |
-            VITE_NEON_AUTH_URL=${{ vars.VITE_NEON_AUTH_URL }}
+            VITE_NEON_AUTH_URL=${{ secrets.PROD_AUTH_URL }}
           cache-from: type=registry,ref=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/ai-frontend:latest
           cache-to: type=inline
 
