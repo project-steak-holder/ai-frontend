@@ -175,14 +175,26 @@ export const useStreamingResponse = (conversationId: string) => {
 		const messagesKey = ["messages", userId, conversationId];
 
 		if (query.isSuccess) {
-			queryClient
-				.invalidateQueries({ queryKey: messagesKey })
-				.catch(() => {
-					// Silently ignore invalidation failures - still reset stream request
-				})
-				.finally(() => {
-					setStreamRequest(null);
+			if (query.data) {
+				queryClient.setQueryData<Message[]>(messagesKey, (current) => {
+					if (!current) return current;
+					const now = new Date().toISOString();
+					return [
+						...current,
+						{
+							id: `optimistic-ai-${Date.now()}`,
+							conversationId,
+							userId: userId as string,
+							content: query.data as string,
+							type: "AI",
+							createdAt: now,
+							updatedAt: now,
+						},
+					];
 				});
+			}
+			setStreamRequest(null);
+			queryClient.invalidateQueries({ queryKey: messagesKey });
 			return;
 		}
 
@@ -196,6 +208,7 @@ export const useStreamingResponse = (conversationId: string) => {
 		isFetching,
 		query.isSuccess,
 		query.isError,
+		query.data,
 		streamRequest,
 		queryClient,
 		userId,
