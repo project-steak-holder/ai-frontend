@@ -1,6 +1,7 @@
 import { authClient } from "@integrations/neon-auth/client";
 import { SignedIn, SignedOut } from "@neondatabase/neon-js/auth/react/ui";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { z } from "zod";
 import { ChatLayout } from "@/components/layout/ChatLayout";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,13 @@ function ChatPage() {
 	const { data: session } = authClient.useSession();
 	const { sendMessage, streamedText, isStreaming } =
 		useStreamingResponse(conversationId);
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (!isStreaming) {
+			inputRef.current?.focus();
+		}
+	}, [isStreaming]);
 
 	const handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void = (e) => {
 		e.preventDefault();
@@ -47,6 +55,7 @@ function ChatPage() {
 				<div className="p-4 border-t">
 					<form onSubmit={handleSubmit}>
 						<Input
+							ref={inputRef}
 							name="message"
 							type="text"
 							placeholder="Type a message..."

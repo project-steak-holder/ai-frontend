@@ -202,6 +202,48 @@ describe("parseSSEStream", () => {
 		expect(results).toEqual(["real"]);
 	});
 
+	it("yields content on an event that combines content with complete", async () => {
+		const stream = createStream([
+			'data:{"content":"first","partial":true}\n',
+			'data:{"content":" final","complete":true}\n',
+		]);
+
+		const results = await collectStream(parseSSEStream(stream));
+		expect(results).toEqual(["first", " final"]);
+	});
+
+	it("does not duplicate content when complete event repeats full accumulated content", async () => {
+		const stream = createStream([
+			'data:{"content":"Hello","partial":true}\n',
+			'data:{"content":" world","partial":true}\n',
+			'data:{"content":"Hello world","complete":true}\n',
+		]);
+
+		const results = await collectStream(parseSSEStream(stream));
+		expect(results.join("")).toEqual("Hello world");
+	});
+
+	it("yields only the tail when complete event extends accumulated content", async () => {
+		const stream = createStream([
+			'data:{"content":"Hello","partial":true}\n',
+			'data:{"content":"Hello world","complete":true}\n',
+		]);
+
+		const results = await collectStream(parseSSEStream(stream));
+		expect(results.join("")).toEqual("Hello world");
+	});
+
+	it("does not terminate on complete:false", async () => {
+		const stream = createStream([
+			'data:{"content":"chunk","partial":true,"complete":false}\n',
+			'data:{"content":"more","partial":true}\n',
+			'data:{"complete":true}\n',
+		]);
+
+		const results = await collectStream(parseSSEStream(stream));
+		expect(results).toEqual(["chunk", "more"]);
+	});
+
 	it("releases the reader lock after completion", async () => {
 		const stream = createStream(['data:{"complete":true}\n']);
 
@@ -223,5 +265,44 @@ describe("parseSSEStream", () => {
 		const reader = stream.getReader();
 		expect(reader).toBeDefined();
 		reader.releaseLock();
+	});
+
+	it("cancels the underlying stream on terminal event", async () => {
+		const cancelSpy = vi.fn();
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				controller.enqueue(encoder.encode('data:{"complete":true}\n'));
+			},
+			cancel: cancelSpy,
+		});
+
+		await collectStream(parseSSEStream(stream));
+
+		expect(cancelSpy).toHaveBeenCalled();
+	});
+
+	it("cancels the underlying stream when the consumer abandons the generator", async () => {
+		const cancelSpy = vi.fn();
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				controller.enqueue(
+					encoder.encode('data:{"content":"first","partial":true}\n'),
+				);
+				controller.enqueue(
+					encoder.encode('data:{"content":"second","partial":true}\n'),
+				);
+			},
+			cancel: cancelSpy,
+		});
+
+		const gen = parseSSEStream(stream);
+		for await (const _ of gen) {
+			await gen.return(undefined);
+			break;
+		}
+
+		expect(cancelSpy).toHaveBeenCalled();
 	});
 });

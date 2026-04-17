@@ -49,22 +49,30 @@ export const streamMessage = createServerFn({
 		);
 
 		if (!response.ok) {
-			let errorMessage = "Failed to stream response";
+			let errorMessage: string;
+
+			if (response.status === 429) {
+				const retryAfter = response.headers.get("Retry-After");
+				const retrySuffix = retryAfter ? ` Try again in ${retryAfter}s.` : "";
+				errorMessage = `Rate limit exceeded.${retrySuffix}`;
+			} else {
+				errorMessage = `Failed to stream response (${response.status})`;
+			}
 
 			try {
 				const errorBody = (await response.json()) as
 					| { message?: string; error?: string }
 					| undefined;
 
-				errorMessage =
-					errorBody?.message ??
-					errorBody?.error ??
-					`Failed to stream response (${response.status})`;
-			} catch {
-				errorMessage = `Failed to stream response (${response.status})`;
-			}
+				const bodyMessage = errorBody?.message ?? errorBody?.error;
+				if (bodyMessage) {
+					errorMessage = bodyMessage;
+				}
+			} catch {}
 
-			throw new Error(errorMessage);
+			const err = new Error(errorMessage) as Error & { status?: number };
+			err.status = response.status;
+			throw err;
 		}
 
 		if (!response.body) {

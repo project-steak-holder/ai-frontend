@@ -49,10 +49,12 @@ export const parseSSEEvent = (dataLine: string): SSEEvent | null => {
 
 export async function* parseSSEStream(
 	stream: ReadableStream<Uint8Array>,
+	onFinish?: () => void,
 ): AsyncGenerator<string> {
 	const reader = stream.getReader();
 	const decoder = new TextDecoder();
 	let pending = "";
+	let accumulated = "";
 
 	try {
 		while (true) {
@@ -88,17 +90,32 @@ export async function* parseSSEStream(
 					return;
 				}
 
-				if ("complete" in event) {
-					return;
+				const isTerminal = "complete" in event && event.complete;
+				const content =
+					"content" in event && typeof event.content === "string"
+						? event.content
+						: "";
+
+				if (content.length > 0) {
+					let toYield = content;
+					if (isTerminal && content.startsWith(accumulated)) {
+						toYield = content.slice(accumulated.length);
+					}
+					if (toYield.length > 0) {
+						accumulated += toYield;
+						yield toYield;
+					}
 				}
 
-				if ("partial" in event && event.content) {
-					yield event.content;
+				if (isTerminal) {
+					return;
 				}
 			}
 		}
 	} finally {
+		await reader.cancel().catch(() => {});
 		reader.releaseLock();
+		onFinish?.();
 	}
 }
 
@@ -121,9 +138,17 @@ export const useStreamingResponse = (conversationId: string) => {
 	const query = useQuery<string>({
 		queryKey: ["streamResponse", conversationId, streamRequest?.id],
 		queryFn: streamedQuery<string, string>({
-			streamFn: async () => {
+			streamFn: async ({ signal }) => {
 				if (!streamRequest) {
 					throw new Error("No stream request");
+				}
+
+				const ac = new AbortController();
+				const onParentAbort = () => ac.abort();
+				if (signal.aborted) {
+					ac.abort();
+				} else {
+					signal.addEventListener("abort", onParentAbort, { once: true });
 				}
 
 				let token: string | null = null;
@@ -141,6 +166,8 @@ export const useStreamingResponse = (conversationId: string) => {
 				}
 
 				if (!token || !userId) {
+					ac.abort();
+					signal.removeEventListener("abort", onParentAbort);
 					throw new Error("You must be signed in to stream a response");
 				}
 
@@ -151,13 +178,19 @@ export const useStreamingResponse = (conversationId: string) => {
 						content: streamRequest.content,
 						token,
 					},
+					signal: ac.signal,
 				});
 
 				if (!(stream instanceof ReadableStream)) {
+					ac.abort();
+					signal.removeEventListener("abort", onParentAbort);
 					throw new Error("Expected a readable stream response");
 				}
 
-				return parseSSEStream(stream);
+				return parseSSEStream(stream, () => {
+					ac.abort();
+					signal.removeEventListener("abort", onParentAbort);
+				});
 			},
 			reducer: (acc: string, chunk: string) => acc + chunk,
 			initialValue: "",
@@ -200,7 +233,10 @@ export const useStreamingResponse = (conversationId: string) => {
 
 		if (query.isError) {
 			queryClient.invalidateQueries({ queryKey: messagesKey });
-			toast.error("Error streaming response");
+			const message = query.error?.message?.trim();
+			toast.error(
+				message && message.length > 0 ? message : "Error streaming response",
+			);
 		}
 
 		setStreamRequest(null);
@@ -208,6 +244,7 @@ export const useStreamingResponse = (conversationId: string) => {
 		isFetching,
 		query.isSuccess,
 		query.isError,
+		query.error,
 		query.data,
 		streamRequest,
 		queryClient,

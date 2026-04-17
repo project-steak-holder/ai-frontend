@@ -246,7 +246,7 @@ describe("useStreamingResponse", () => {
 			expect(result.current.isStreaming).toBe(false);
 		});
 
-		expect(mockToastError).toHaveBeenCalledWith("Error streaming response");
+		expect(mockToastError).toHaveBeenCalledWith("Stream failed");
 
 		// Cache is preserved (invalidateQueries triggers refetch, not removal)
 		const messagesKey = ["messages", "user-1", "conv-1"];

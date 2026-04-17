@@ -121,6 +121,31 @@ describe("streamMessage", () => {
 		).rejects.toThrow("Failed to stream response (502)");
 	});
 
+	it("throws a rate-limit message with Retry-After on 429", async () => {
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response("too many", {
+				status: 429,
+				headers: { "Retry-After": "30" },
+			}),
+		);
+
+		await expect(
+			(streamMessage as unknown as ServerFn)(validInput),
+		).rejects.toThrow("Rate limit exceeded. Try again in 30s.");
+	});
+
+	it("prefers the upstream body message when present on 429", async () => {
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(JSON.stringify({ message: "Slow down, buddy" }), {
+				status: 429,
+			}),
+		);
+
+		await expect(
+			(streamMessage as unknown as ServerFn)(validInput),
+		).rejects.toThrow("Slow down, buddy");
+	});
+
 	it("throws when response has no body", async () => {
 		// Create a response with null body
 		const response = new Response(null, { status: 200 });
