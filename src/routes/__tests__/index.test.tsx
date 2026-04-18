@@ -6,16 +6,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 
 const mockSignedIn = vi.fn();
-const mockRedirectToSignIn = vi.fn();
+const mockSignedOut = vi.fn();
 
 vi.mock("@neondatabase/neon-js/auth/react/ui", () => ({
 	SignedIn: ({ children }: { children: React.ReactNode }) => {
 		mockSignedIn();
 		return <div data-testid="signed-in">{children}</div>;
 	},
-	RedirectToSignIn: () => {
-		mockRedirectToSignIn();
-		return <div data-testid="redirect-to-sign-in" />;
+	SignedOut: ({ children }: { children: React.ReactNode }) => {
+		mockSignedOut();
+		return <div data-testid="signed-out">{children}</div>;
 	},
 }));
 
@@ -23,6 +23,24 @@ vi.mock("@tanstack/react-router", () => ({
 	createFileRoute: () => (options: Record<string, unknown>) => ({
 		...options,
 	}),
+	Link: ({
+		to,
+		params,
+		children,
+	}: {
+		to: string;
+		params?: Record<string, string>;
+		children: React.ReactNode;
+	}) => (
+		<a
+			data-testid="router-link"
+			data-to={to}
+			data-params={params ? JSON.stringify(params) : undefined}
+			href={to}
+		>
+			{children}
+		</a>
+	),
 }));
 
 vi.mock("@/stores/dialogStore", () => ({
@@ -45,7 +63,7 @@ describe("Home route (index.tsx)", () => {
 	});
 
 	describe("Home component", () => {
-		it("renders the welcome heading", async () => {
+		it("renders the signed-in welcome heading", async () => {
 			const indexModule = await import("@/routes/index");
 			const HomeComponent = indexModule.Route.component;
 			if (!HomeComponent) throw new Error("component not defined");
@@ -56,7 +74,7 @@ describe("Home route (index.tsx)", () => {
 			).toBeInTheDocument();
 		});
 
-		it("renders descriptive paragraph text", async () => {
+		it("renders signed-in descriptive paragraph text", async () => {
 			const indexModule = await import("@/routes/index");
 			const HomeComponent = indexModule.Route.component;
 			if (!HomeComponent) throw new Error("component not defined");
@@ -79,23 +97,14 @@ describe("Home route (index.tsx)", () => {
 			expect(signedInBlock).toContainElement(button);
 		});
 
-		it("uses SignedIn component for auth gating", async () => {
+		it("uses SignedIn and SignedOut components for auth gating", async () => {
 			const indexModule = await import("@/routes/index");
 			const HomeComponent = indexModule.Route.component;
 			if (!HomeComponent) throw new Error("component not defined");
 
 			render(<HomeComponent />);
 			expect(mockSignedIn).toHaveBeenCalled();
-		});
-
-		it("renders RedirectToSignIn for unauthenticated users", async () => {
-			const indexModule = await import("@/routes/index");
-			const HomeComponent = indexModule.Route.component;
-			if (!HomeComponent) throw new Error("component not defined");
-
-			render(<HomeComponent />);
-			expect(mockRedirectToSignIn).toHaveBeenCalled();
-			expect(screen.getByTestId("redirect-to-sign-in")).toBeInTheDocument();
+			expect(mockSignedOut).toHaveBeenCalled();
 		});
 
 		it("renders the 'New Conversation' CTA button", async () => {
@@ -107,6 +116,50 @@ describe("Home route (index.tsx)", () => {
 			expect(
 				screen.getByRole("button", { name: /new conversation/i }),
 			).toBeInTheDocument();
+		});
+
+		it("renders the logged-out hero headline", async () => {
+			const indexModule = await import("@/routes/index");
+			const HomeComponent = indexModule.Route.component;
+			if (!HomeComponent) throw new Error("component not defined");
+
+			render(<HomeComponent />);
+			expect(
+				screen.getByText(/practice with an ai stakeholder/i),
+			).toBeInTheDocument();
+		});
+
+		it("renders the sign-in CTA link inside the SignedOut guard", async () => {
+			const indexModule = await import("@/routes/index");
+			const HomeComponent = indexModule.Route.component;
+			if (!HomeComponent) throw new Error("component not defined");
+
+			render(<HomeComponent />);
+
+			const signedOutBlock = screen.getByTestId("signed-out");
+			const button = screen.getByRole("button", {
+				name: /sign in to get started/i,
+			});
+			expect(signedOutBlock).toContainElement(button);
+
+			const link = button.closest("a");
+			expect(link).not.toBeNull();
+			expect(link).toHaveAttribute("data-to", "/auth/$pathname");
+			expect(link).toHaveAttribute(
+				"data-params",
+				JSON.stringify({ pathname: "sign-in" }),
+			);
+		});
+
+		it("renders the academic-use footer note for signed-out users", async () => {
+			const indexModule = await import("@/routes/index");
+			const HomeComponent = indexModule.Route.component;
+			if (!HomeComponent) throw new Error("component not defined");
+
+			render(<HomeComponent />);
+			const signedOutBlock = screen.getByTestId("signed-out");
+			const note = screen.getByText(/learning tool for academic use/i);
+			expect(signedOutBlock).toContainElement(note);
 		});
 	});
 });
