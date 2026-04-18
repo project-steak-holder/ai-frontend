@@ -16,7 +16,7 @@ jobs:
           node-version: "24"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run lint
         run: npm run lint
@@ -40,7 +40,7 @@ jobs:
           node-version: "24"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
@@ -91,7 +91,7 @@ jobs:
           node-version: "24"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
